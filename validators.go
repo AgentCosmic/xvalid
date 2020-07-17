@@ -436,6 +436,7 @@ func (c *EmailValidator) MarshalJSON() ([]byte, error) {
 	}{"email"})
 }
 
+// IsEmail returns true if the string is an email
 func IsEmail(email string) bool {
 	return emailRegex.MatchString(email)
 }
@@ -526,28 +527,4 @@ func StructFunc(f func(interface{}) Error) Validator {
 	return &StructFuncValidator{
 		checker: f,
 	}
-}
-
-// ===============
-
-var webPageRegex = regexp.MustCompile(`^https?://[^\s/$.?#].[^\s]*$`)
-
-func IsWebPage(url string) bool {
-	return webPageRegex.MatchString(url)
-}
-
-func createError(name, custom, fallback string) Error {
-	if custom != "" {
-		return NewError(custom, name)
-	}
-	return NewError(fallback, name)
-}
-
-func toInt64(value interface{}) int64 {
-	v := reflect.ValueOf(value)
-	switch v.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int()
-	}
-	panic(fmt.Errorf("cannot convert %v to int64", v.Kind()))
 }
