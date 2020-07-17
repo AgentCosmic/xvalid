@@ -26,6 +26,10 @@ validating wrongly.
 
 ## Examples
 
+To define your own validator, you must implement the
+[Validator](https://godoc.org/github.com/AgentCosmic/xvalid#Validator) interface. For example,, see any of the
+validators in [validators.go](https://github.com/AgentCosmic/xvalid/blob/master/validators.go)
+
 Define rules and validate objects:
 
 ```
