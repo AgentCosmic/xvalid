@@ -1,4 +1,4 @@
 /*
-Package xvalid is a simple validator that can export rules as JSON for clients to share the rules (e.g. browsers)
+Package xvalid is a lightweight validation library that can export rules as JSON so browsers can apply the same rules.
 */
 package xvalid

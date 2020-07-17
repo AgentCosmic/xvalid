@@ -441,50 +441,6 @@ func IsEmail(email string) bool {
 }
 
 //
-// ==================== Phone ====================
-//
-
-// PhoneNumberValidator field must be a valid phone number address
-type PhoneNumberValidator struct {
-	PatternValidator
-}
-
-// https://en.wikipedia.org/wiki/Telephone_numbers_in_Singapore
-var phoneNumberRegex = regexp.MustCompile(`^65[3689]\d{7}$`)
-
-// var phoneNumberRegex = regexp.MustCompile(`^\d$`)
-
-// PhoneNumber field must be a valid phoneNumber address
-func PhoneNumber() *PhoneNumberValidator {
-	return &PhoneNumberValidator{
-		PatternValidator{
-			re:      phoneNumberRegex,
-			message: "Please use an 8 digit Singapore phone number without dash or space",
-		},
-	}
-}
-
-// MarshalJSON for this validator
-func (c *PhoneNumberValidator) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Rule    string `json:"rule"`
-		Pattern string `json:"pattern"`
-	}{"pattern", phoneNumberRegex.String()})
-}
-
-func IsPhoneNumber(number string) bool {
-	return phoneNumberRegex.MatchString(number)
-}
-
-func CleanPhoneNumber(number string) string {
-	number = regexp.MustCompile(`[^\d]`).ReplaceAllString(number, "")
-	if len(number) == 8 {
-		number = "65" + number
-	}
-	return number
-}
-
-//
 // ==================== FieldFunc ====================
 //
 
