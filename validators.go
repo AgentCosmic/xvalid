@@ -528,3 +528,19 @@ func StructFunc(f func(interface{}) Error) Validator {
 		checker: f,
 	}
 }
+
+func createError(name, custom, fallback string) Error {
+	if custom != "" {
+		return NewError(custom, name)
+	}
+	return NewError(fallback, name)
+}
+
+func toInt64(value interface{}) int64 {
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int()
+	}
+	panic(fmt.Errorf("cannot convert %v to int64", v.Kind()))
+}
