@@ -72,6 +72,7 @@ func TestMinStr(t *testing.T) {
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Long enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit min")
 	assert.Len(t, rules.Validate(strType{Field: "1"}).(Errors), 1, "Too short")
+	assert.Len(t, rules.Validate(strType{Field: "£"}).(Errors), 1, "Multi-byte characters too short")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&str).Field(&str.Field, MinStr(2).SetMessage(msg)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")
@@ -93,6 +94,7 @@ func TestMaxStr(t *testing.T) {
 	assert.Len(t, rules.Validate(strType{Field: "123"}).(Errors), 1, "Short enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(strType{Field: "1"}), "Short enough")
+	assert.Nil(t, rules.Validate(strType{Field: "世界"}), "Multi-byte characters are short enough")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&str).Field(&str.Field, MaxStr(0).SetMessage(msg)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")

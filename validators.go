@@ -110,7 +110,7 @@ func (c *MinStrValidator) Validate(value interface{}) Error {
 	if c.optional && str == "" {
 		return nil
 	}
-	if len(str) < int(c.min) {
+	if len([]rune(str)) < int(c.min) {
 		return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", c.name, c.min))
 	}
 	return nil
@@ -165,7 +165,7 @@ func (c *MaxStrValidator) SetMessage(msg string) Validator {
 
 // Validate the value
 func (c *MaxStrValidator) Validate(value interface{}) Error {
-	if len(value.(string)) > int(c.max) {
+	if len([]rune(value.(string))) > int(c.max) {
 		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", c.name, c.max))
 	}
 	return nil
