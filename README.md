@@ -27,12 +27,12 @@ validating wrongly.
 ## Examples
 
 To define your own validator, you must implement the
-[Validator](https://godoc.org/github.com/AgentCosmic/xvalid#Validator) interface. For example,, see any of the
+[Validator](https://godoc.org/github.com/AgentCosmic/xvalid#Validator) interface. For example, see any of the
 validators in [validators.go](https://github.com/AgentCosmic/xvalid/blob/master/validators.go)
 
 Define rules and validate objects:
 
-```
+```go
 // Store model
 type Store struct {
 	Name          string     `json:"name"`
@@ -78,7 +78,7 @@ if err != nil {
 
 Export rules as JSON:
 
-```
+```go
 func createValidationMap(model ...ruleHolder) map[string]interface{} {
 	rules := make(map[string]interface{})
 	for _, m := range model {
