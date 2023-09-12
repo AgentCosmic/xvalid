@@ -1,6 +1,7 @@
 package xvalid
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -244,6 +245,23 @@ func TestStruct(t *testing.T) {
 	rules := New(&u).Struct(&compareValidator{})
 	assert.Nil(t, rules.Validate(structSubject{Less: 1, More: 2}), "Valid")
 	assert.Len(t, rules.Validate(structSubject{Less: 2, More: 1}).(Errors), 1, "Invalid")
+}
+
+func TestMarshalJSON(t *testing.T) {
+	type strType struct {
+		Field string
+	}
+
+	str := strType{}
+	rules := New(&str).Field(&str.Field, MinStr(2))
+	data, _ := json.Marshal(rules.validators)
+
+	assert.Equal(t, string(data), `[{"rule":"minStr","min":2}]`)
+
+	rules = New(&str).Field(&str.Field, MinStr(2).SetMessage("length minimum 2"))
+	data, _ = json.Marshal(rules.validators)
+
+	assert.Equal(t, string(data), `[{"rule":"minStr","min":2,"msg":"length minimum 2"}]`)
 }
 
 type structSubject struct {

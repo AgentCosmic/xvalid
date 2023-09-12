@@ -57,7 +57,8 @@ func (c *RequiredValidator) Validate(value interface{}) Error {
 func (c *RequiredValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
-	}{"required"})
+		Msg  string `json:"msg,omitempty"`
+	}{"required", c.message})
 }
 
 // HTMLCompatible for this validator
@@ -121,7 +122,8 @@ func (c *MinStrValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Min  int64  `json:"min"`
-	}{"minStr", c.min})
+		Msg  string `json:"msg,omitempty"`
+	}{"minStr", c.min, c.message})
 }
 
 // HTMLCompatible for this validator
@@ -176,7 +178,8 @@ func (c *MaxStrValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Max  int64  `json:"max"`
-	}{"maxStr", c.max})
+		Msg  string `json:"msg,omitempty"`
+	}{"maxStr", c.max, c.message})
 }
 
 // HTMLCompatible for this validator
@@ -258,7 +261,8 @@ func (c *MinIntValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Min  int64  `json:"min"`
-	}{"minInt", c.min})
+		Msg  string `json:"msg,omitempty"`
+	}{"minInt", c.min, c.message})
 }
 
 // HTMLCompatible for this validator
@@ -327,7 +331,8 @@ func (c *MaxIntValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Max  int64  `json:"max"`
-	}{"maxInt", c.max})
+		Msg  string `json:"msg,omitempty"`
+	}{"maxInt", c.max, c.message})
 }
 
 // HTMLCompatible for this validator
@@ -393,7 +398,8 @@ func (c *PatternValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule    string `json:"rule"`
 		Pattern string `json:"pattern"`
-	}{"pattern", c.re.String()})
+		Msg     string `json:"msg,omitempty"`
+	}{"pattern", c.re.String(), c.message})
 }
 
 // HTMLCompatible for this validator
@@ -433,7 +439,8 @@ func Email() *EmailValidator {
 func (c *EmailValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
-	}{"email"})
+		Msg  string `json:"msg,omitempty"`
+	}{"email", c.message})
 }
 
 // IsEmail returns true if the string is an email
