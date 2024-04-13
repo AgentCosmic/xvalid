@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 )
 
 // Error when a rule is broken
@@ -153,7 +154,7 @@ func getFieldName(structPtr any, fieldPtr any) string {
 		panic(errors.New("can't find field"))
 	}
 
-	tag := ft.Tag.Get("json")
+	tag := strings.Split(ft.Tag.Get("json"), ",")[0]
 	if tag == "" {
 		tag = ft.Name
 	}
@@ -201,7 +202,7 @@ func structToMap(structPtr any) map[string]any {
 	structValue := reflect.ValueOf(structPtr)
 	for i := structValue.NumField() - 1; i >= 0; i-- {
 		sf := structValue.Type().Field(i)
-		name := sf.Tag.Get("json")
+		name := strings.Split(sf.Tag.Get("json"), ",")[0]
 		if name == "" {
 			name = sf.Name
 		}

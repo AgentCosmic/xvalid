@@ -248,10 +248,10 @@ func TestStructFunc(t *testing.T) {
 func TestMarshalJSON(t *testing.T) {
 	type exportType struct {
 		Str string
-		Int int `json:"number"`
+		Int int `json:"number,omitempty"`
 	}
 	e := exportType{}
 	rules := New(&e).Field(&e.Str, Required(), MaxLength(5)).Field(&e.Int, Min(10).SetOptional().SetMessage("my message"))
 	j, _ := json.Marshal(rules)
-	assert.Equal(t, string(j), `{"Str":[{"rule":"required"},{"rule":"maxLength","max":5}],"number":[{"rule":"min","min":10,"message":"my message"}]}`, "Export rules to json")
+	assert.Equal(t, `{"Str":[{"rule":"required"},{"rule":"maxLength","max":5}],"number":[{"rule":"min","min":10,"message":"my message"}]}`, string(j), "Export rules to json")
 }
