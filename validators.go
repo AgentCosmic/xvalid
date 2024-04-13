@@ -58,8 +58,8 @@ func (c *RequiredValidator) Validate(value any) Error {
 // MarshalJSON for this validator
 func (c *RequiredValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Msg  string `json:"msg,omitempty"`
+		Rule    string `json:"rule"`
+		Message string `json:"message,omitempty"`
 	}{"required", c.message})
 }
 
@@ -101,8 +101,8 @@ func (c *MinLengthValidator) SetMessage(msg string) Validator {
 	return c
 }
 
-// Optional don't validate if the value is zero
-func (c *MinLengthValidator) Optional() Validator {
+// SetOptional don't validate if the value is zero
+func (c *MinLengthValidator) SetOptional() Validator {
 	c.optional = true
 	return c
 }
@@ -122,9 +122,10 @@ func (c *MinLengthValidator) Validate(value any) Error {
 // MarshalJSON for this validator
 func (c *MinLengthValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Min  int64  `json:"min"`
-	}{"minLength", c.min})
+		Rule    string `json:"rule"`
+		Min     int64  `json:"min"`
+		Message string `json:"message,omitempty"`
+	}{"minLength", c.min, c.message})
 }
 
 // HtmlCompatible for this validator
@@ -177,9 +178,10 @@ func (c *MaxLengthValidator) Validate(value any) Error {
 // MarshalJSON for this validator
 func (c *MaxLengthValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Max  int64  `json:"max"`
-	}{"maxLength", c.max})
+		Rule    string `json:"rule"`
+		Max     int64  `json:"max"`
+		Message string `json:"message,omitempty"`
+	}{"maxLength", c.max, c.message})
 }
 
 // HtmlCompatible for this validator
@@ -222,8 +224,8 @@ func (c *MinValidator) SetMessage(msg string) Validator {
 	return c
 }
 
-// Optional don't validate if the value is zero
-func (c *MinValidator) Optional() Validator {
+// SetOptional don't validate if the value is zero
+func (c *MinValidator) SetOptional() Validator {
 	c.optional = true
 	return c
 }
@@ -252,9 +254,10 @@ func (c *MinValidator) Validate(value any) Error {
 // MarshalJSON for this validator
 func (c *MinValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Min  int64  `json:"min"`
-	}{"min", c.min})
+		Rule    string `json:"rule"`
+		Min     int64  `json:"min"`
+		Message string `json:"message,omitempty"`
+	}{"min", c.min, c.message})
 }
 
 // HtmlCompatible for this validator
@@ -320,9 +323,10 @@ func (c *MaxValidator) Validate(value any) Error {
 // MarshalJSON for this validator
 func (c *MaxValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Max  int64  `json:"max"`
-	}{"max", c.max})
+		Rule    string `json:"rule"`
+		Max     int64  `json:"max"`
+		Message string `json:"message,omitempty"`
+	}{"max", c.max, c.message})
 }
 
 // HtmlCompatible for this validator
@@ -365,8 +369,8 @@ func (c *PatternValidator) SetMessage(msg string) Validator {
 	return c
 }
 
-// Optional don't validate if the value is zero
-func (c *PatternValidator) Optional() Validator {
+// SetOptional don't validate if the value is zero
+func (c *PatternValidator) SetOptional() Validator {
 	c.optional = true
 	return c
 }
@@ -388,7 +392,7 @@ func (c *PatternValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule    string `json:"rule"`
 		Pattern string `json:"pattern"`
-		Msg     string `json:"msg,omitempty"`
+		Message string `json:"message,omitempty"`
 	}{"pattern", c.re.String(), c.message})
 }
 
@@ -439,8 +443,8 @@ func (c *EmailValidator) SetMessage(msg string) Validator {
 	return c
 }
 
-// Optional don't validate if the value is zero
-func (c *EmailValidator) Optional() Validator {
+// SetOptional don't validate if the value is zero
+func (c *EmailValidator) SetOptional() Validator {
 	c.optional = true
 	return c
 }
@@ -468,7 +472,8 @@ func (c *EmailValidator) MarshalJSON() ([]byte, error) {
 		Rule    string `json:"rule"`
 		Type    string `json:"type"`
 		Pattern string `json:"pattern"`
-	}{"type", "email", emailRegex.String()})
+		Message string `json:"message,omitempty"`
+	}{"type", "email", emailRegex.String(), c.message})
 }
 
 // IsEmail returns true if the string is an email

@@ -31,8 +31,8 @@ func TestRequired(t *testing.T) {
 	s := ""
 	r = requiredType{
 		Bytes: make([]byte, 0),
-		Time: time.Time{},
-		Ptr:  &s,
+		Time:  time.Time{},
+		Ptr:   &s,
 	}
 	errs = New(&r).
 		Field(&r.Bytes, Required()).
@@ -81,7 +81,7 @@ func TestMinLength(t *testing.T) {
 	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MinLength(2)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&str).Field(&str.Field, MinLength(3).Optional())
+	rules = New(&str).Field(&str.Field, MinLength(3).SetOptional())
 	assert.Nil(t, rules.Validate(strType{Field: ""}), "Invalid but zero")
 	assert.Len(t, rules.Validate(strType{Field: " "}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Valid and not zero")
@@ -120,7 +120,7 @@ func TestMinInt(t *testing.T) {
 	assert.NotEqual(t, msg, New(&i).Field(&i.Int, Min(0)).
 		Validate(intType{Int: -1}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&i).Field(&i.Int, Min(5).Optional())
+	rules = New(&i).Field(&i.Int, Min(5).SetOptional())
 	assert.Nil(t, rules.Validate(intType{Int: 0}), "Invalid but zero")
 	assert.Len(t, rules.Validate(intType{Int: 1}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(intType{Int: 5}), "Valid and not zero")
@@ -135,7 +135,7 @@ func TestMinInt(t *testing.T) {
 	assert.NotEqual(t, msg, New(&i).Field(&i.Float, Min(0)).
 		Validate(intType{Float: -1}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&i).Field(&i.Float, Min(5).Optional())
+	rules = New(&i).Field(&i.Float, Min(5).SetOptional())
 	assert.Nil(t, rules.Validate(intType{Float: 0}), "Invalid but zero")
 	assert.Len(t, rules.Validate(intType{Float: 1}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(intType{Float: 5}), "Valid and not zero")
@@ -183,7 +183,7 @@ func TestPattern(t *testing.T) {
 	assert.NotEqual(t, msg, New(&p).Field(&p.Field, Pattern(`\d{2}`)).
 		Validate(patternType{Field: "message"}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&p).Field(&p.Field, Pattern(`\w{3,}`).Optional())
+	rules = New(&p).Field(&p.Field, Pattern(`\w{3,}`).SetOptional())
 	assert.Nil(t, rules.Validate(patternType{Field: ""}), "Invalid but zero")
 	assert.Len(t, rules.Validate(patternType{Field: " "}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(patternType{Field: "123"}), "Valid and not zero")
@@ -203,7 +203,7 @@ func TestEmail(t *testing.T) {
 	assert.NotEqual(t, msg, New(&p).Field(&p.Field, Email()).
 		Validate(emailType{Field: "invalid"}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&p).Field(&p.Field, Email().Optional())
+	rules = New(&p).Field(&p.Field, Email().SetOptional())
 	assert.Nil(t, rules.Validate(emailType{Field: ""}), "Invalid but zero")
 	assert.Len(t, rules.Validate(emailType{Field: "fake"}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(emailType{Field: "test@mail.com"}), "Valid and not zero")
@@ -248,23 +248,6 @@ func TestStruct(t *testing.T) {
 	assert.Len(t, rules.Validate(structSubject{Less: 2, More: 1}).(Errors), 1, "Invalid")
 }
 
-func TestMarshalJSON(t *testing.T) {
-	type strType struct {
-		Field string
-	}
-
-	str := strType{}
-	rules := New(&str).Field(&str.Field, MinStr(2))
-	data, _ := json.Marshal(rules.validators)
-
-	assert.Equal(t, string(data), `[{"rule":"minStr","min":2}]`)
-
-	rules = New(&str).Field(&str.Field, MinStr(2).SetMessage("length minimum 2"))
-	data, _ = json.Marshal(rules.validators)
-
-	assert.Equal(t, string(data), `[{"rule":"minStr","min":2,"msg":"length minimum 2"}]`)
-}
-
 type structSubject struct {
 	Less int
 	More int
@@ -301,16 +284,13 @@ func (c *compareValidator) Validate(value any) Error {
 	return nil
 }
 
-func TestJson(t *testing.T) {
+func TestMarshalJSON(t *testing.T) {
 	type exportType struct {
-		Str   string `json:"string"`
-		Int   int    `json:"number"`
-		Email string
+		Str string
+		Int int `json:"number"`
 	}
 	e := exportType{}
-	rules := New(&e).Field(&e.Str, Required(), MaxLength(5)).Field(&e.Int, Min(10).Optional()).Field(&e.Email, Email())
-	j, err := json.MarshalIndent(rules, " ", " ")
-	assert.Nil(t, err, "Export rules to json")
-	assert.NotEqual(t, len(j), "Export rules to json")
-	// println(string(j))
+	rules := New(&e).Field(&e.Str, Required(), MaxLength(5)).Field(&e.Int, Min(10).SetOptional().SetMessage("my message"))
+	j, _ := json.Marshal(rules)
+	assert.Equal(t, string(j), `{"Str":[{"rule":"required"},{"rule":"maxLength","max":5}],"number":[{"rule":"min","min":10,"message":"my message"}]}`, "Export rules to json")
 }
