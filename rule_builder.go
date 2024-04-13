@@ -1,6 +1,7 @@
 package xvalid
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 )
@@ -53,19 +54,19 @@ func (v Errors) Error() string {
 type Validator interface {
 	SetName(string)
 	Name() string
-	HTMLCompatible() bool
+	HtmlCompatible() bool
 	SetMessage(string) Validator
-	Validate(interface{}) Error
+	Validate(any) Error
 }
 
 // Rules for creating a chain of rules for validating a struct
 type Rules struct {
 	validators []Validator
-	structPtr  interface{}
+	structPtr  any
 }
 
 // New rule chain
-func New(structPtr interface{}) Rules {
+func New(structPtr any) Rules {
 	return Rules{
 		structPtr:  structPtr,
 		validators: make([]Validator, 0),
@@ -73,7 +74,7 @@ func New(structPtr interface{}) Rules {
 }
 
 // Field adds validators for a field
-func (r Rules) Field(fieldPtr interface{}, validators ...Validator) Rules {
+func (r Rules) Field(fieldPtr any, validators ...Validator) Rules {
 	for _, validator := range validators {
 		validator.SetName(getFieldName(r.structPtr, fieldPtr))
 		r.validators = append(r.validators, validator)
@@ -88,7 +89,7 @@ func (r Rules) Struct(validators ...Validator) Rules {
 }
 
 // Validate a struct and return Errors
-func (r Rules) Validate(subject interface{}) error {
+func (r Rules) Validate(subject any) error {
 	errs := make(Errors, 0)
 	vmap := structToMap(subject)
 	for _, validator := range r.validators {
@@ -108,26 +109,32 @@ func (r Rules) Validate(subject interface{}) error {
 	return nil
 }
 
-// OnlyFor filters the validators to match only the fields
-func (r Rules) OnlyFor(name string) Rules {
-	validators := r.validators
-	r.validators = make([]Validator, 0)
-	for _, v := range validators {
-		if v.Name() == name {
-			r.validators = append(r.validators, v)
-		}
-	}
-	return r
-}
-
 // Validators for this chain
 func (r Rules) Validators() []Validator {
 	return r.validators
 }
 
+func (r Rules) MarshalJSON() ([]byte, error) {
+	rmap := make(map[string][]any)
+	validators := r.Validators()
+	for _, v := range validators {
+		if !v.HtmlCompatible() {
+			continue
+		}
+		name := v.Name()
+		rules, ok := rmap[name]
+		if !ok {
+			rules = make([]any, 0)
+		}
+		rules = append(rules, v)
+		rmap[name] = rules
+	}
+	return json.MarshalIndent(rmap, "", "	")
+}
+
 // -------------------
 
-func getFieldName(structPtr interface{}, fieldPtr interface{}) string {
+func getFieldName(structPtr any, fieldPtr any) string {
 	value := reflect.ValueOf(structPtr)
 	if value.Kind() != reflect.Ptr || !value.IsNil() && value.Elem().Kind() != reflect.Struct {
 		panic(errors.New("struct is not pointer"))
@@ -189,8 +196,8 @@ func joinSentences(list []string) string {
 }
 
 // structToMap converts struct to map and uses the json name if available
-func structToMap(structPtr interface{}) map[string]interface{} {
-	vmap := make(map[string]interface{})
+func structToMap(structPtr any) map[string]any {
+	vmap := make(map[string]any)
 	structValue := reflect.ValueOf(structPtr)
 	for i := structValue.NumField() - 1; i >= 0; i-- {
 		sf := structValue.Type().Field(i)

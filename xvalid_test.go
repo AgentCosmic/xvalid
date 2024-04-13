@@ -6,36 +6,37 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v3"
 )
 
 func TestRequired(t *testing.T) {
 	type requiredType struct {
 		Number int
+		Float  float32
 		String string
+		Bytes  []byte
 		Time   time.Time
-		Null   null.Int
 		Ptr    *string
 	}
 	r := requiredType{}
 	errs := New(&r).
 		Field(&r.Number, Required()).
+		Field(&r.Float, Required()).
 		Field(&r.String, Required()).
+		Field(&r.Bytes, Required()).
 		Field(&r.Time, Required()).
-		Field(&r.Null, Required()).
 		Field(&r.Ptr, Required()).
 		Validate(r)
-	assert.Len(t, errs.(Errors), 5, "All not set")
+	assert.Len(t, errs.(Errors), 6, "All not set")
 
 	s := ""
 	r = requiredType{
-		Null: null.NewInt(0, false),
+		Bytes: make([]byte, 0),
 		Time: time.Time{},
 		Ptr:  &s,
 	}
 	errs = New(&r).
+		Field(&r.Bytes, Required()).
 		Field(&r.Time, Required()).
-		Field(&r.Null, Required()).
 		Field(&r.Ptr, Required()).
 		Validate(r)
 	assert.Len(t, errs.(Errors), 3, "Complex type set but empty")
@@ -43,8 +44,8 @@ func TestRequired(t *testing.T) {
 	s = "ok"
 	r = requiredType{
 		Number: 1,
+		Float:  1,
 		String: "ok",
-		Null:   null.NewInt(0, true),
 		Time:   time.Now(),
 		Ptr:    &s,
 	}
@@ -52,7 +53,7 @@ func TestRequired(t *testing.T) {
 		Field(&r.Number, Required()).
 		Field(&r.String, Required()).
 		Field(&r.Time, Required()).
-		Field(&r.Null, Required()).
+		Field(&r.Float, Required()).
 		Field(&r.Ptr, Required()).
 		Validate(r)
 	assert.Nil(t, errs, "All value are set")
@@ -64,107 +65,107 @@ func TestRequired(t *testing.T) {
 		Validate(requiredType{}).(Errors)[0].Error(), "Default error message")
 }
 
-func TestMinStr(t *testing.T) {
+func TestMinLength(t *testing.T) {
 	type strType struct {
 		Field string
 	}
 	str := strType{}
-	rules := New(&str).Field(&str.Field, MinStr(2))
+	rules := New(&str).Field(&str.Field, MinLength(2))
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Long enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit min")
 	assert.Len(t, rules.Validate(strType{Field: "1"}).(Errors), 1, "Too short")
 	assert.Len(t, rules.Validate(strType{Field: "£"}).(Errors), 1, "Multi-byte characters too short")
 	msg := "custom message"
-	assert.Equal(t, msg, New(&str).Field(&str.Field, MinStr(2).SetMessage(msg)).
+	assert.Equal(t, msg, New(&str).Field(&str.Field, MinLength(2).SetMessage(msg)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MinStr(2)).
+	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MinLength(2)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&str).Field(&str.Field, MinStr(3).Optional())
+	rules = New(&str).Field(&str.Field, MinLength(3).Optional())
 	assert.Nil(t, rules.Validate(strType{Field: ""}), "Invalid but zero")
 	assert.Len(t, rules.Validate(strType{Field: " "}).(Errors), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Valid and not zero")
 }
 
-func TestMaxStr(t *testing.T) {
+func TestMaxLength(t *testing.T) {
 	type strType struct {
 		Field string
 	}
 	str := strType{}
-	rules := New(&str).Field(&str.Field, MaxStr(2))
+	rules := New(&str).Field(&str.Field, MaxLength(2))
 	assert.Len(t, rules.Validate(strType{Field: "123"}).(Errors), 1, "Short enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(strType{Field: "1"}), "Short enough")
 	assert.Nil(t, rules.Validate(strType{Field: "世界"}), "Multi-byte characters are short enough")
 	msg := "custom message"
-	assert.Equal(t, msg, New(&str).Field(&str.Field, MaxStr(0).SetMessage(msg)).
+	assert.Equal(t, msg, New(&str).Field(&str.Field, MaxLength(0).SetMessage(msg)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MaxStr(0)).
+	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MaxLength(0)).
 		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Default error message")
 }
 
 func TestMinInt(t *testing.T) {
 	type intType struct {
-		Field int
-		Null  null.Int
+		Int   int
+		Float float64
 	}
 	i := intType{}
-	rules := New(&i).Field(&i.Field, MinInt(0))
-	assert.Nil(t, rules.Validate(intType{Field: 1}), "Big enough")
-	assert.Nil(t, rules.Validate(intType{Field: 0}), "Exactly hit min")
-	assert.Len(t, rules.Validate(intType{Field: -1}).(Errors), 1, "Too low")
+	rules := New(&i).Field(&i.Int, Min(0))
+	assert.Nil(t, rules.Validate(intType{Int: 1}), "Big enough")
+	assert.Nil(t, rules.Validate(intType{Int: 0}), "Exactly hit min")
+	assert.Len(t, rules.Validate(intType{Int: -1}).(Errors), 1, "Too low")
 	msg := "custom message"
-	assert.Equal(t, msg, New(&i).Field(&i.Field, MinInt(0).SetMessage(msg)).
-		Validate(intType{Field: -1}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&i).Field(&i.Field, MinInt(0)).
-		Validate(intType{Field: -1}).(Errors)[0].Error(), "Default error message")
+	assert.Equal(t, msg, New(&i).Field(&i.Int, Min(0).SetMessage(msg)).
+		Validate(intType{Int: -1}).(Errors)[0].Error(), "Custom error message")
+	assert.NotEqual(t, msg, New(&i).Field(&i.Int, Min(0)).
+		Validate(intType{Int: -1}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&i).Field(&i.Field, MinInt(5).Optional())
-	assert.Nil(t, rules.Validate(intType{Field: 0}), "Invalid but zero")
-	assert.Len(t, rules.Validate(intType{Field: 1}).(Errors), 1, "Invalid and not zero")
-	assert.Nil(t, rules.Validate(intType{Field: 5}), "Valid and not zero")
+	rules = New(&i).Field(&i.Int, Min(5).Optional())
+	assert.Nil(t, rules.Validate(intType{Int: 0}), "Invalid but zero")
+	assert.Len(t, rules.Validate(intType{Int: 1}).(Errors), 1, "Invalid and not zero")
+	assert.Nil(t, rules.Validate(intType{Int: 5}), "Valid and not zero")
 
-	// null
-	rules = New(&i).Field(&i.Null, MinInt(0))
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(1)}), "Big enough")
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(0)}), "Exactly hit min")
-	assert.Len(t, rules.Validate(intType{Null: null.IntFrom(-1)}).(Errors), 1, "Too low")
-	assert.Equal(t, msg, New(&i).Field(&i.Null, MinInt(0).SetMessage(msg)).
-		Validate(intType{Null: null.IntFrom(-1)}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&i).Field(&i.Null, MinInt(0)).
-		Validate(intType{Null: null.IntFrom(-1)}).(Errors)[0].Error(), "Default error message")
+	// float
+	rules = New(&i).Field(&i.Float, Min(0))
+	assert.Nil(t, rules.Validate(intType{Float: 1}), "Big enough")
+	assert.Nil(t, rules.Validate(intType{Float: 0}), "Exactly hit min")
+	assert.Len(t, rules.Validate(intType{Float: -1}).(Errors), 1, "Too low")
+	assert.Equal(t, msg, New(&i).Field(&i.Float, Min(0).SetMessage(msg)).
+		Validate(intType{Float: -1}).(Errors)[0].Error(), "Custom error message")
+	assert.NotEqual(t, msg, New(&i).Field(&i.Float, Min(0)).
+		Validate(intType{Float: -1}).(Errors)[0].Error(), "Default error message")
 	// optional
-	rules = New(&i).Field(&i.Null, MinInt(5).Optional())
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(0)}), "Invalid but zero")
-	assert.Len(t, rules.Validate(intType{Null: null.IntFrom(1)}).(Errors), 1, "Invalid and not zero")
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(5)}), "Valid and not zero")
+	rules = New(&i).Field(&i.Float, Min(5).Optional())
+	assert.Nil(t, rules.Validate(intType{Float: 0}), "Invalid but zero")
+	assert.Len(t, rules.Validate(intType{Float: 1}).(Errors), 1, "Invalid and not zero")
+	assert.Nil(t, rules.Validate(intType{Float: 5}), "Valid and not zero")
 }
 
 func TestMaxInt(t *testing.T) {
 	type intType struct {
 		Field int
-		Null  null.Int
+		Float float64
 	}
 	i := intType{}
-	rules := New(&i).Field(&i.Field, MaxInt(0))
+	rules := New(&i).Field(&i.Field, Max(0))
 	assert.Len(t, rules.Validate(intType{Field: 1}).(Errors), 1, "Too big")
 	assert.Nil(t, rules.Validate(intType{Field: 0}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(intType{Field: -1}), "Low engouh")
 	msg := "custom message"
-	assert.Equal(t, msg, New(&i).Field(&i.Field, MaxInt(0).SetMessage(msg)).
+	assert.Equal(t, msg, New(&i).Field(&i.Field, Max(0).SetMessage(msg)).
 		Validate(intType{Field: 1}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&i).Field(&i.Field, MaxInt(0)).
+	assert.NotEqual(t, msg, New(&i).Field(&i.Field, Max(0)).
 		Validate(intType{Field: 1}).(Errors)[0].Error(), "Default error message")
 
-	// null
-	rules = New(&i).Field(&i.Null, MaxInt(0))
-	assert.Len(t, rules.Validate(intType{Null: null.IntFrom(1)}).(Errors), 1, "Too big")
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(0)}), "Exactly hit max")
-	assert.Nil(t, rules.Validate(intType{Null: null.IntFrom(-1)}), "Low engouh")
-	assert.Equal(t, msg, New(&i).Field(&i.Null, MaxInt(0).SetMessage(msg)).
-		Validate(intType{Null: null.IntFrom(1)}).(Errors)[0].Error(), "Custom error message")
-	assert.NotEqual(t, msg, New(&i).Field(&i.Null, MaxInt(0)).
-		Validate(intType{Null: null.IntFrom(1)}).(Errors)[0].Error(), "Default error message")
+	// float
+	rules = New(&i).Field(&i.Float, Max(0))
+	assert.Len(t, rules.Validate(intType{Float: 1}).(Errors), 1, "Too big")
+	assert.Nil(t, rules.Validate(intType{Float: 0}), "Exactly hit max")
+	assert.Nil(t, rules.Validate(intType{Float: -1}), "Low engouh")
+	assert.Equal(t, msg, New(&i).Field(&i.Float, Max(0).SetMessage(msg)).
+		Validate(intType{Float: 1}).(Errors)[0].Error(), "Custom error message")
+	assert.NotEqual(t, msg, New(&i).Field(&i.Float, Max(0)).
+		Validate(intType{Float: 1}).(Errors)[0].Error(), "Default error message")
 }
 
 func TestPattern(t *testing.T) {
@@ -212,7 +213,7 @@ func TestFieldFunc(t *testing.T) {
 	type funcTest struct {
 		Field string
 	}
-	checker := func(fieldName string, value interface{}) Error {
+	checker := func(fieldName string, value any) Error {
 		if value.(string) == "invalid" {
 			return NewError("Invalid field", fieldName)
 		}
@@ -228,7 +229,7 @@ func TestStructFunc(t *testing.T) {
 	type funcTest struct {
 		Field string
 	}
-	checker := func(value interface{}) Error {
+	checker := func(value any) Error {
 		if value.(string) == "invalid" {
 			return NewError("Invalid field", "")
 		}
@@ -287,15 +288,29 @@ func (c *compareValidator) SetMessage(msg string) Validator {
 	return c
 }
 
-// HTMLCompatible for this validator
-func (c *compareValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *compareValidator) HtmlCompatible() bool {
 	return true
 }
 
-func (c *compareValidator) Validate(value interface{}) Error {
+func (c *compareValidator) Validate(value any) Error {
 	subject := value.(structSubject)
 	if subject.Less > subject.More {
 		return NewError("comparison failed", "")
 	}
 	return nil
+}
+
+func TestJson(t *testing.T) {
+	type exportType struct {
+		Str   string `json:"string"`
+		Int   int    `json:"number"`
+		Email string
+	}
+	e := exportType{}
+	rules := New(&e).Field(&e.Str, Required(), MaxLength(5)).Field(&e.Int, Min(10).Optional()).Field(&e.Email, Email())
+	j, err := json.MarshalIndent(rules, " ", " ")
+	assert.Nil(t, err, "Export rules to json")
+	assert.NotEqual(t, len(j), "Export rules to json")
+	// println(string(j))
 }

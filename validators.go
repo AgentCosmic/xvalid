@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"gopkg.in/guregu/null.v3"
+	"golang.org/x/exp/constraints"
 )
 
 //
@@ -36,7 +36,7 @@ func (c *RequiredValidator) SetMessage(msg string) Validator {
 }
 
 // Validate the value
-func (c *RequiredValidator) Validate(value interface{}) Error {
+func (c *RequiredValidator) Validate(value any) Error {
 	v := reflect.ValueOf(value)
 	zero := false
 	kind := v.Kind()
@@ -45,6 +45,8 @@ func (c *RequiredValidator) Validate(value interface{}) Error {
 	} else if v.IsZero() {
 		zero = true
 	} else if (kind == reflect.Ptr || kind == reflect.Interface) && v.Elem().IsZero() {
+		zero = true
+	} else if (kind == reflect.Array || kind == reflect.Slice) && v.Len() == 0 {
 		zero = true
 	}
 	if zero {
@@ -61,8 +63,8 @@ func (c *RequiredValidator) MarshalJSON() ([]byte, error) {
 	}{"required", c.message})
 }
 
-// HTMLCompatible for this validator
-func (c *RequiredValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *RequiredValidator) HtmlCompatible() bool {
 	return true
 }
 
@@ -72,11 +74,11 @@ func Required() *RequiredValidator {
 }
 
 //
-// ==================== MinStr ====================
+// ==================== MinLength ====================
 //
 
-// MinStrValidator field must have minimum length
-type MinStrValidator struct {
+// MinLengthValidator field must have minimum length
+type MinLengthValidator struct {
 	name     string
 	message  string
 	min      int64
@@ -84,29 +86,29 @@ type MinStrValidator struct {
 }
 
 // Name of the field
-func (c *MinStrValidator) Name() string {
+func (c *MinLengthValidator) Name() string {
 	return c.name
 }
 
 // SetName of the field
-func (c *MinStrValidator) SetName(name string) {
+func (c *MinLengthValidator) SetName(name string) {
 	c.name = name
 }
 
 // SetMessage set error message
-func (c *MinStrValidator) SetMessage(msg string) Validator {
+func (c *MinLengthValidator) SetMessage(msg string) Validator {
 	c.message = msg
 	return c
 }
 
 // Optional don't validate if the value is zero
-func (c *MinStrValidator) Optional() Validator {
+func (c *MinLengthValidator) Optional() Validator {
 	c.optional = true
 	return c
 }
 
 // Validate the value
-func (c *MinStrValidator) Validate(value interface{}) Error {
+func (c *MinLengthValidator) Validate(value any) Error {
 	str := value.(string)
 	if c.optional && str == "" {
 		return nil
@@ -118,55 +120,54 @@ func (c *MinStrValidator) Validate(value interface{}) Error {
 }
 
 // MarshalJSON for this validator
-func (c *MinStrValidator) MarshalJSON() ([]byte, error) {
+func (c *MinLengthValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Min  int64  `json:"min"`
-		Msg  string `json:"msg,omitempty"`
-	}{"minStr", c.min, c.message})
+	}{"minLength", c.min})
 }
 
-// HTMLCompatible for this validator
-func (c *MinStrValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *MinLengthValidator) HtmlCompatible() bool {
 	return true
 }
 
-// MinStr field must have minimum length
-func MinStr(min int64) *MinStrValidator {
-	return &MinStrValidator{
+// MinLength field must have minimum length
+func MinLength(min int64) *MinLengthValidator {
+	return &MinLengthValidator{
 		min: min,
 	}
 }
 
 //
-// ==================== MaxStr ====================
+// ==================== MaxLength ====================
 //
 
-// MaxStrValidator field have maximum length
-type MaxStrValidator struct {
+// MaxLengthValidator field have maximum length
+type MaxLengthValidator struct {
 	name    string
 	message string
 	max     int64
 }
 
 // Name of the field
-func (c *MaxStrValidator) Name() string {
+func (c *MaxLengthValidator) Name() string {
 	return c.name
 }
 
 // SetName of the field
-func (c *MaxStrValidator) SetName(name string) {
+func (c *MaxLengthValidator) SetName(name string) {
 	c.name = name
 }
 
 // SetMessage set error message
-func (c *MaxStrValidator) SetMessage(msg string) Validator {
+func (c *MaxLengthValidator) SetMessage(msg string) Validator {
 	c.message = msg
 	return c
 }
 
 // Validate the value
-func (c *MaxStrValidator) Validate(value interface{}) Error {
+func (c *MaxLengthValidator) Validate(value any) Error {
 	if len([]rune(value.(string))) > int(c.max) {
 		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", c.name, c.max))
 	}
@@ -174,32 +175,31 @@ func (c *MaxStrValidator) Validate(value interface{}) Error {
 }
 
 // MarshalJSON for this validator
-func (c *MaxStrValidator) MarshalJSON() ([]byte, error) {
+func (c *MaxLengthValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Max  int64  `json:"max"`
-		Msg  string `json:"msg,omitempty"`
-	}{"maxStr", c.max, c.message})
+	}{"maxLength", c.max})
 }
 
-// HTMLCompatible for this validator
-func (c *MaxStrValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *MaxLengthValidator) HtmlCompatible() bool {
 	return true
 }
 
-// MaxStr field have maximum length
-func MaxStr(max int64) *MaxStrValidator {
-	return &MaxStrValidator{
+// MaxLength field have maximum length
+func MaxLength(max int64) *MaxLengthValidator {
+	return &MaxLengthValidator{
 		max: max,
 	}
 }
 
 //
-// ==================== MinInt ====================
+// ==================== Min ====================
 //
 
-// MinIntValidator field have minimum value
-type MinIntValidator struct {
+// MinValidator field have minimum value
+type MinValidator struct {
 	name     string
 	message  string
 	min      int64
@@ -207,142 +207,132 @@ type MinIntValidator struct {
 }
 
 // Name of the field
-func (c *MinIntValidator) Name() string {
+func (c *MinValidator) Name() string {
 	return c.name
 }
 
 // SetName of the field
-func (c *MinIntValidator) SetName(name string) {
+func (c *MinValidator) SetName(name string) {
 	c.name = name
 }
 
 // SetMessage set error message
-func (c *MinIntValidator) SetMessage(msg string) Validator {
+func (c *MinValidator) SetMessage(msg string) Validator {
 	c.message = msg
 	return c
 }
 
 // Optional don't validate if the value is zero
-func (c *MinIntValidator) Optional() Validator {
+func (c *MinValidator) Optional() Validator {
 	c.optional = true
 	return c
 }
 
 // Validate the value
-func (c *MinIntValidator) Validate(value interface{}) Error {
+func (c *MinValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
+	newError := func() Error {
+		return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %v or more", c.name, c.min))
+	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v := toInt64(value)
-		if c.optional && v == 0 {
-			return nil
+		if isLess(toInt64(value), c.min, c.optional) {
+			return newError()
 		}
-		if v < c.min {
-			return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %d or more", c.name, c.min))
+	case reflect.Float32, reflect.Float64:
+		if isLess(toFloat64(value), float64(c.min), c.optional) {
+			return newError()
 		}
 	default:
-		if n, ok := value.(null.Int); ok {
-			v := n.Int64
-			if c.optional && v == 0 {
-				return nil
-			}
-			if v < c.min {
-				return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %d or more", c.name, c.min))
-			}
-		} else {
-			panic(fmt.Errorf("type not supported: %v", rv.Type()))
-		}
+		panic(fmt.Errorf("type not supported: %v", rv.Type()))
 	}
 	return nil
 }
 
 // MarshalJSON for this validator
-func (c *MinIntValidator) MarshalJSON() ([]byte, error) {
+func (c *MinValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Min  int64  `json:"min"`
-		Msg  string `json:"msg,omitempty"`
-	}{"minInt", c.min, c.message})
+	}{"min", c.min})
 }
 
-// HTMLCompatible for this validator
-func (c *MinIntValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *MinValidator) HtmlCompatible() bool {
 	return true
 }
 
-// MinInt field have minimum value
-func MinInt(min int64) *MinIntValidator {
-	return &MinIntValidator{
+// Min field have minimum value
+func Min(min int64) *MinValidator {
+	return &MinValidator{
 		min: min,
 	}
 }
 
 //
-// ==================== MaxInt ====================
+// ==================== Max ====================
 //
 
-// MaxIntValidator field have maximum value
-type MaxIntValidator struct {
+// MaxValidator field have maximum value
+type MaxValidator struct {
 	name    string
 	message string
 	max     int64
 }
 
 // Name of the field
-func (c *MaxIntValidator) Name() string {
+func (c *MaxValidator) Name() string {
 	return c.name
 }
 
 // SetName of the field
-func (c *MaxIntValidator) SetName(name string) {
+func (c *MaxValidator) SetName(name string) {
 	c.name = name
 }
 
 // SetMessage set error message
-func (c *MaxIntValidator) SetMessage(msg string) Validator {
+func (c *MaxValidator) SetMessage(msg string) Validator {
 	c.message = msg
 	return c
 }
 
 // Validate the value
-func (c *MaxIntValidator) Validate(value interface{}) Error {
+func (c *MaxValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
+	newError := func() Error {
+		return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %v or less", c.name, c.max))
+	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v := toInt64(value)
-		if v > c.max {
-			return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %d or less", c.name, c.max))
+		if isMore(toInt64(value), c.max) {
+			return newError()
+		}
+	case reflect.Float32, reflect.Float64:
+		if isMore(toFloat64(value), float64(c.max)) {
+			return newError()
 		}
 	default:
-		if n, ok := value.(null.Int); ok {
-			v := n.Int64
-			if v > c.max {
-				return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %d or less", c.name, c.max))
-			}
-		} else {
-			panic(fmt.Errorf("type not supported: %v", rv.Type()))
-		}
+		panic(fmt.Errorf("type not supported: %v", rv.Type()))
 	}
 	return nil
 }
 
 // MarshalJSON for this validator
-func (c *MaxIntValidator) MarshalJSON() ([]byte, error) {
+func (c *MaxValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Rule string `json:"rule"`
 		Max  int64  `json:"max"`
-		Msg  string `json:"msg,omitempty"`
-	}{"maxInt", c.max, c.message})
+	}{"max", c.max})
 }
 
-// HTMLCompatible for this validator
-func (c *MaxIntValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *MaxValidator) HtmlCompatible() bool {
 	return true
 }
 
-// MaxInt field have maximum value
-func MaxInt(max int64) *MaxIntValidator {
-	return &MaxIntValidator{
+// Max field have maximum value
+func Max(max int64) *MaxValidator {
+	return &MaxValidator{
 		max: max,
 	}
 }
@@ -382,7 +372,7 @@ func (c *PatternValidator) Optional() Validator {
 }
 
 // Validate the value
-func (c *PatternValidator) Validate(value interface{}) Error {
+func (c *PatternValidator) Validate(value any) Error {
 	str := value.(string)
 	if c.optional && str == "" {
 		return nil
@@ -402,8 +392,8 @@ func (c *PatternValidator) MarshalJSON() ([]byte, error) {
 	}{"pattern", c.re.String(), c.message})
 }
 
-// HTMLCompatible for this validator
-func (c *PatternValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *PatternValidator) HtmlCompatible() bool {
 	return true
 }
 
@@ -420,27 +410,65 @@ func Pattern(pattern string) *PatternValidator {
 
 // EmailValidator field must be a valid email address
 type EmailValidator struct {
-	PatternValidator
+	Validator
+	name     string
+	message  string
+	optional bool
 }
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // Email field must be a valid email address
 func Email() *EmailValidator {
-	return &EmailValidator{
-		PatternValidator{
-			re:      emailRegex,
-			message: "Please use a valid email address",
-		},
+	return &EmailValidator{}
+}
+
+// Name of the field
+func (c *EmailValidator) Name() string {
+	return c.name
+}
+
+// SetName of the field
+func (c *EmailValidator) SetName(name string) {
+	c.name = name
+}
+
+// SetMessage set error message
+func (c *EmailValidator) SetMessage(msg string) Validator {
+	c.message = msg
+	return c
+}
+
+// Optional don't validate if the value is zero
+func (c *EmailValidator) Optional() Validator {
+	c.optional = true
+	return c
+}
+
+// Validate the value
+func (c *EmailValidator) Validate(value any) Error {
+	str := value.(string)
+	if c.optional && str == "" {
+		return nil
 	}
+	if emailRegex.MatchString(str) {
+		return nil
+	}
+	return createError(c.name, c.message, "Please use a valid email address")
+}
+
+// HtmlCompatible for this validator
+func (c *EmailValidator) HtmlCompatible() bool {
+	return true
 }
 
 // MarshalJSON for this validator
 func (c *EmailValidator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Rule string `json:"rule"`
-		Msg  string `json:"msg,omitempty"`
-	}{"email", c.message})
+		Rule    string `json:"rule"`
+		Type    string `json:"type"`
+		Pattern string `json:"pattern"`
+	}{"type", "email", emailRegex.String()})
 }
 
 // IsEmail returns true if the string is an email
@@ -456,7 +484,7 @@ func IsEmail(email string) bool {
 type FieldFuncValidator struct {
 	name    string
 	message string
-	checker func(string, interface{}) Error
+	checker func(string, any) Error
 }
 
 // Name of the field
@@ -476,17 +504,17 @@ func (c *FieldFuncValidator) SetMessage(msg string) Validator {
 }
 
 // Validate the value
-func (c *FieldFuncValidator) Validate(value interface{}) Error {
+func (c *FieldFuncValidator) Validate(value any) Error {
 	return c.checker(c.name, value)
 }
 
-// HTMLCompatible for this validator
-func (c *FieldFuncValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *FieldFuncValidator) HtmlCompatible() bool {
 	return false
 }
 
 // FieldFunc for validating with custom function
-func FieldFunc(f func(string, interface{}) Error) Validator {
+func FieldFunc(f func(string, any) Error) Validator {
 	return &FieldFuncValidator{
 		checker: f,
 	}
@@ -500,7 +528,7 @@ func FieldFunc(f func(string, interface{}) Error) Validator {
 type StructFuncValidator struct {
 	name    string
 	message string
-	checker func(interface{}) Error
+	checker func(any) Error
 }
 
 // Name of the field
@@ -520,21 +548,25 @@ func (c *StructFuncValidator) SetMessage(msg string) Validator {
 }
 
 // Validate the value
-func (c *StructFuncValidator) Validate(value interface{}) Error {
+func (c *StructFuncValidator) Validate(value any) Error {
 	return c.checker(value)
 }
 
-// HTMLCompatible for this validator
-func (c *StructFuncValidator) HTMLCompatible() bool {
+// HtmlCompatible for this validator
+func (c *StructFuncValidator) HtmlCompatible() bool {
 	return false
 }
 
 // StructFunc validate struct with custom function
-func StructFunc(f func(interface{}) Error) Validator {
+func StructFunc(f func(any) Error) Validator {
 	return &StructFuncValidator{
 		checker: f,
 	}
 }
+
+//
+// ====================
+//
 
 func createError(name, custom, fallback string) Error {
 	if custom != "" {
@@ -543,11 +575,38 @@ func createError(name, custom, fallback string) Error {
 	return NewError(fallback, name)
 }
 
-func toInt64(value interface{}) int64 {
+func toInt64(value any) int64 {
 	v := reflect.ValueOf(value)
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return v.Int()
 	}
 	panic(fmt.Errorf("cannot convert %v to int64", v.Kind()))
+}
+
+func toFloat64(value any) float64 {
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Float32, reflect.Float64:
+		return v.Float()
+	}
+	panic(fmt.Errorf("cannot convert %v to float64", v.Kind()))
+}
+
+func isLess[T number](value T, min T, optional bool) bool {
+	if optional && value == 0 {
+		return false
+	}
+	if value < min {
+		return true
+	}
+	return false
+}
+
+func isMore[T number](value T, max T) bool {
+	return value > max
+}
+
+type number interface {
+	constraints.Integer | constraints.Float
 }
