@@ -227,61 +227,22 @@ func TestFieldFunc(t *testing.T) {
 
 func TestStructFunc(t *testing.T) {
 	type funcTest struct {
-		Field string
+		A int
+		B int
 	}
 	checker := func(value any) Error {
-		if value.(string) == "invalid" {
-			return NewError("Invalid field", "")
+		s := value.(funcTest)
+		if s.A > s.B {
+			return NewError("custom error", "")
 		}
 		return nil
 	}
 	p := funcTest{}
-	rules := New(&p).Field(&p.Field, StructFunc(checker))
-	assert.Nil(t, rules.Validate(funcTest{Field: "valid"}), "Valid")
-	assert.Len(t, rules.Validate(funcTest{Field: "invalid"}).(Errors), 1, "Invalid")
-}
-
-func TestStruct(t *testing.T) {
-	u := structSubject{}
-	rules := New(&u).Struct(&compareValidator{})
-	assert.Nil(t, rules.Validate(structSubject{Less: 1, More: 2}), "Valid")
-	assert.Len(t, rules.Validate(structSubject{Less: 2, More: 1}).(Errors), 1, "Invalid")
-}
-
-type structSubject struct {
-	Less int
-	More int
-}
-
-type compareValidator struct {
-	name    string
-	message string
-}
-
-func (c *compareValidator) Name() string {
-	return c.name
-}
-
-func (c *compareValidator) SetName(name string) {
-	c.name = name
-}
-
-func (c *compareValidator) SetMessage(msg string) Validator {
-	c.message = msg
-	return c
-}
-
-// HtmlCompatible for this validator
-func (c *compareValidator) HtmlCompatible() bool {
-	return true
-}
-
-func (c *compareValidator) Validate(value any) Error {
-	subject := value.(structSubject)
-	if subject.Less > subject.More {
-		return NewError("comparison failed", "")
-	}
-	return nil
+	rules := New(&p).Struct(StructFunc(checker))
+	assert.Nil(t, rules.Validate(funcTest{A: 3, B: 10}), "Valid")
+	errs := rules.Validate(funcTest{A: 3, B: 1})
+	assert.Len(t, errs.(Errors), 1, "Invalid")
+	assert.Equal(t, errs.(Errors)[0].Error(), "custom error", "Error message")
 }
 
 func TestMarshalJSON(t *testing.T) {

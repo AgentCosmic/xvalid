@@ -529,7 +529,7 @@ func FieldFunc(f func(string, any) Error) Validator {
 // ==================== StructFunc ====================
 //
 
-// StructFuncValidator validate struct with custom function
+// StructFuncValidator validate struct with custom function. Add to rules with .Struct().
 type StructFuncValidator struct {
 	name    string
 	message string

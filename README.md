@@ -38,6 +38,7 @@ type Store struct {
 	Address     string `json:"address"`
 	Description string `json:"description"`
 	Tax         int    `json:"tax"`
+	Revenue     int    `json:"revenue"`
 }
 
 // Rules for this model.
@@ -47,7 +48,7 @@ func (store Store) Rules() xvalid.Rules {
 			xvalid.MaxLength(80).SetMessage("Please shorten name to 80 characters or less"),
 			xvalid.Pattern("^[a-zA-Z0-9_]+$").SetOptional().SetMessage("Name may contain alphabets, numbers and underscores"),
 			xvalid.Pattern("[a-zA-Z]").SetOptional().SetMessage("Name must contain at least 1 alphabet"),
-			xvalid.FieldFunc(func(fieldName string, value interface{}) xvalid.Error {
+			xvalid.FieldFunc(func(fieldName string, value any) xvalid.Error {
 				name := value.(string)
 				if name == "" {
 					return nil
@@ -59,7 +60,14 @@ func (store Store) Rules() xvalid.Rules {
 			})).
 		Field(&store.Address, xvalid.Required(), xvalid.MaxLength(120)).
 		Field(&store.Description, xvalid.MaxLength(1500)).
-		Field(&store.Tax, xvalid.Min(0), xvalid.Max(100))
+		Field(&store.Tax, xvalid.Min(0), xvalid.Max(100)).
+		Struct(xvalid.StructFunc(func(v any) xvalid.Error {
+			s := v.(Store)
+			if s.Revenue > 1000 && s.Tax == 0 {
+				return xvalid.NewError("Tax cannot be empty if revenue is more than $1000", "tax")
+			}
+			return nil
+		}))
 }
 
 // validate
