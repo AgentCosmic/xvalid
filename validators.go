@@ -63,8 +63,8 @@ func (c *RequiredValidator) MarshalJSON() ([]byte, error) {
 	}{"required", c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *RequiredValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *RequiredValidator) CanExport() bool {
 	return true
 }
 
@@ -128,8 +128,8 @@ func (c *MinLengthValidator) MarshalJSON() ([]byte, error) {
 	}{"minLength", c.min, c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *MinLengthValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *MinLengthValidator) CanExport() bool {
 	return true
 }
 
@@ -184,8 +184,8 @@ func (c *MaxLengthValidator) MarshalJSON() ([]byte, error) {
 	}{"maxLength", c.max, c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *MaxLengthValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *MaxLengthValidator) CanExport() bool {
 	return true
 }
 
@@ -260,8 +260,8 @@ func (c *MinValidator) MarshalJSON() ([]byte, error) {
 	}{"min", c.min, c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *MinValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *MinValidator) CanExport() bool {
 	return true
 }
 
@@ -329,8 +329,8 @@ func (c *MaxValidator) MarshalJSON() ([]byte, error) {
 	}{"max", c.max, c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *MaxValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *MaxValidator) CanExport() bool {
 	return true
 }
 
@@ -396,8 +396,8 @@ func (c *PatternValidator) MarshalJSON() ([]byte, error) {
 	}{"pattern", c.re.String(), c.message})
 }
 
-// HtmlCompatible for this validator
-func (c *PatternValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *PatternValidator) CanExport() bool {
 	return true
 }
 
@@ -461,8 +461,8 @@ func (c *EmailValidator) Validate(value any) Error {
 	return createError(c.name, c.message, "Please use a valid email address")
 }
 
-// HtmlCompatible for this validator
-func (c *EmailValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *EmailValidator) CanExport() bool {
 	return true
 }
 
@@ -520,9 +520,18 @@ func (c *OptionsValidator) Validate(value any) Error {
 	return createError(c.name, c.message, "Please select one of the valid options")
 }
 
-// HtmlCompatible for this validator
-func (c *OptionsValidator) HtmlCompatible() bool {
-	return false
+// CanExport for this validator
+func (c *OptionsValidator) CanExport() bool {
+	return true
+}
+
+// MarshalJSON for this validator
+func (c *OptionsValidator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Rule    string `json:"rule"`
+		Options []any  `json:"options"`
+		Message string `json:"message,omitempty"`
+	}{"options", c.options, c.message})
 }
 
 // Options for whitelisting accepted values
@@ -564,8 +573,8 @@ func (c *FieldFuncValidator) Validate(value any) Error {
 	return c.checker(c.name, value)
 }
 
-// HtmlCompatible for this validator
-func (c *FieldFuncValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *FieldFuncValidator) CanExport() bool {
 	return false
 }
 
@@ -608,8 +617,8 @@ func (c *StructFuncValidator) Validate(value any) Error {
 	return c.checker(value)
 }
 
-// HtmlCompatible for this validator
-func (c *StructFuncValidator) HtmlCompatible() bool {
+// CanExport for this validator
+func (c *StructFuncValidator) CanExport() bool {
 	return false
 }
 

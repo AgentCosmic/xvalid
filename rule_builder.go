@@ -55,7 +55,7 @@ func (v Errors) Error() string {
 type Validator interface {
 	SetName(string)
 	Name() string
-	HtmlCompatible() bool
+	CanExport() bool
 	SetMessage(string) Validator
 	Validate(any) Error
 }
@@ -119,7 +119,7 @@ func (r Rules) MarshalJSON() ([]byte, error) {
 	rmap := make(map[string][]any)
 	validators := r.Validators()
 	for _, v := range validators {
-		if !v.HtmlCompatible() {
+		if !v.CanExport() {
 			continue
 		}
 		name := v.Name()
