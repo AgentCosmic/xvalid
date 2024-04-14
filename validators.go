@@ -482,6 +482,57 @@ func IsEmail(email string) bool {
 }
 
 //
+// ==================== Options ====================
+//
+
+// OptionsValidator for whitelisting accepted values
+type OptionsValidator struct {
+	name    string
+	message string
+	options []any
+}
+
+// Name of the field
+func (c *OptionsValidator) Name() string {
+	return c.name
+}
+
+// SetName of the field
+func (c *OptionsValidator) SetName(name string) {
+	c.name = name
+}
+
+// SetMessage set error message
+func (c *OptionsValidator) SetMessage(msg string) Validator {
+	c.message = msg
+	return c
+}
+
+// Validate the value
+func (c *OptionsValidator) Validate(value any) Error {
+	v := reflect.ValueOf(value)
+	actual := v.Interface()
+	for _, opt := range c.options {
+		if opt == actual {
+			return nil
+		}
+	}
+	return createError(c.name, c.message, "Please select one of the valid options")
+}
+
+// HtmlCompatible for this validator
+func (c *OptionsValidator) HtmlCompatible() bool {
+	return false
+}
+
+// Options for whitelisting accepted values
+func Options(options ...any) Validator {
+	return &OptionsValidator{
+		options: options,
+	}
+}
+
+//
 // ==================== FieldFunc ====================
 //
 

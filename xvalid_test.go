@@ -209,6 +209,31 @@ func TestEmail(t *testing.T) {
 	assert.Nil(t, rules.Validate(emailType{Field: "test@mail.com"}), "Valid and not zero")
 }
 
+func TestOptions(t *testing.T) {
+	type optionsType struct {
+		Str string
+		Int int
+	}
+	o := optionsType{}
+	// string
+	rules := New(&o).Field(&o.Str, Options("a", "b", "c"))
+	assert.Len(t, rules.Validate(optionsType{Str: "x"}).(Errors), 1, "Not in options")
+	assert.Nil(t, rules.Validate(optionsType{Str: "b"}), "Valid option")
+	msg := "custom message"
+	assert.Equal(t, msg, New(&o).Field(&o.Str, Options().SetMessage(msg)).
+		Validate(optionsType{Str: "invalid"}).(Errors)[0].Error(), "Custom error message")
+	assert.NotEqual(t, msg, New(&o).Field(&o.Str, Options()).
+		Validate(optionsType{Str: "invalid"}).(Errors)[0].Error(), "Default error message")
+	// int
+	rules = New(&o).Field(&o.Int, Options(1, 2, 3))
+	assert.Len(t, rules.Validate(optionsType{Int: 5}).(Errors), 1, "Not in options")
+	assert.Nil(t, rules.Validate(optionsType{Int: 1}), "Valid option")
+	// mixed type
+	rules = New(&o).Field(&o.Int, Options("a", 5, make([]byte, 0)))
+	assert.Len(t, rules.Validate(optionsType{Int: -1}).(Errors), 1, "Not in options")
+	assert.Nil(t, rules.Validate(optionsType{Int: 5}), "Valid option")
+}
+
 func TestFieldFunc(t *testing.T) {
 	type funcTest struct {
 		Field string
