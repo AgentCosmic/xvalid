@@ -96,9 +96,20 @@ func (r Rules) Validate(subject any) error {
 	for _, validator := range r.validators {
 		var err Error
 		if validator.Name() == "" {
+			// struct validation
 			err = validator.Validate(subject)
 		} else {
-			err = validator.Validate(vmap[validator.Name()])
+			// field validation
+			path := strings.Split(validator.Name(), ".")
+			v := vmap
+			for _, p := range path {
+				switch v2 := v[p].(type) {
+				default:
+					err = validator.Validate(v2)
+				case map[string]any:
+					v = v2
+				}
+			}
 		}
 		if err != nil {
 			errs = append(errs, err)
@@ -149,34 +160,43 @@ func getFieldName(structPtr any, fieldPtr any) string {
 	if fv.Kind() != reflect.Ptr {
 		panic(errors.New("field is not pointer"))
 	}
-	ft := findStructField(value, fv)
-	if ft == nil {
+	fields := findStructField(value, fv, make([]*reflect.StructField, 0))
+	if len(fields) == 0 {
 		panic(errors.New("can't find field"))
 	}
 
-	tag := strings.Split(ft.Tag.Get("json"), ",")[0]
-	if tag == "" {
-		tag = ft.Name
+	parts := make([]string, 0)
+	for _, f := range fields {
+		tag := strings.Split(f.Tag.Get("json"), ",")[0]
+		if tag == "" {
+			tag = f.Name
+		}
+		parts = append(parts, tag)
 	}
-	return tag
+	return strings.Join(parts, ".")
 }
 
 // findStructField looks for a field in the given struct.
 // The field being looked for should be a pointer to the actual struct field.
-// If found, the field info will be returned. Otherwise, nil will be returned.
-func findStructField(structValue reflect.Value, fieldValue reflect.Value) *reflect.StructField {
+// If found, the fields will be returned. Otherwise, an empty list will be returned.
+func findStructField(structValue reflect.Value, fieldValue reflect.Value, results []*reflect.StructField) []*reflect.StructField {
 	ptr := fieldValue.Pointer()
+	depth := len(results)
 	for i := structValue.NumField() - 1; i >= 0; i-- {
 		sf := structValue.Type().Field(i)
 		if ptr == structValue.Field(i).UnsafeAddr() {
-			// do additional type comparison because it's possible that the address of
-			// an embedded struct is the same as the first field of the embedded struct
-			if sf.Type == fieldValue.Elem().Type() {
-				return &sf
+			if sf.Anonymous {
+				return findStructField(structValue.Field(i), fieldValue, append(results, &sf))
+			}
+			return append(results, &sf)
+		} else if sf.Anonymous {
+			tmp := findStructField(structValue.Field(i), fieldValue, append(results, &sf))
+			if len(tmp) > depth+1 {
+				return tmp
 			}
 		}
 	}
-	return nil
+	return results
 }
 
 // joinSentences converts a list of strings to a paragraph
@@ -185,15 +205,8 @@ func joinSentences(list []string) string {
 	if l == 0 {
 		return ""
 	}
-	final := list[0]
-	for i := 1; i < l; i++ {
-		if i == l-1 {
-			final = final + list[i] + "."
-		} else {
-			final = final + list[i] + ". "
-		}
-	}
-	return final
+	sentence := strings.Join(list, ". ")
+	return sentence[:len(sentence)-1]
 }
 
 // structToMap converts struct to map and uses the json name if available
@@ -208,7 +221,11 @@ func structToMap(structPtr any) map[string]any {
 		}
 		f := structValue.Field(i)
 		if f.CanInterface() {
-			vmap[name] = f.Interface()
+			if sf.Anonymous {
+				vmap[name] = structToMap(f.Interface())
+			} else {
+				vmap[name] = f.Interface()
+			}
 		}
 	}
 	return vmap

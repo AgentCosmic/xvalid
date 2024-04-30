@@ -46,7 +46,7 @@ func (c *RequiredValidator) Validate(value any) Error {
 		zero = true
 	} else if (kind == reflect.Ptr || kind == reflect.Interface) && v.Elem().IsZero() {
 		zero = true
-	} else if (kind == reflect.Array || kind == reflect.Slice) && v.Len() == 0 {
+	} else if (kind == reflect.Array || kind == reflect.Slice || kind == reflect.Map) && v.Len() == 0 {
 		zero = true
 	}
 	if zero {
@@ -109,7 +109,14 @@ func (c *MinLengthValidator) SetOptional() Validator {
 
 // Validate the value
 func (c *MinLengthValidator) Validate(value any) Error {
-	str := value.(string)
+	str, ok := value.(string)
+	if !ok {
+		if c.optional {
+			return nil
+		} else {
+			return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", c.name, c.min))
+		}
+	}
 	if c.optional && str == "" {
 		return nil
 	}
@@ -169,7 +176,11 @@ func (c *MaxLengthValidator) SetMessage(msg string) Validator {
 
 // Validate the value
 func (c *MaxLengthValidator) Validate(value any) Error {
-	if len([]rune(value.(string))) > int(c.max) {
+	v, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	if len([]rune(v)) > int(c.max) {
 		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", c.name, c.max))
 	}
 	return nil
@@ -245,6 +256,10 @@ func (c *MinValidator) Validate(value any) Error {
 		if isLess(toFloat64(value), float64(c.min), c.optional) {
 			return newError()
 		}
+	case reflect.Invalid:
+		if !c.optional {
+			return newError()
+		}
 	default:
 		panic(fmt.Errorf("type not supported: %v", rv.Type()))
 	}
@@ -314,6 +329,8 @@ func (c *MaxValidator) Validate(value any) Error {
 		if isMore(toFloat64(value), float64(c.max)) {
 			return newError()
 		}
+	case reflect.Invalid:
+		return nil
 	default:
 		panic(fmt.Errorf("type not supported: %v", rv.Type()))
 	}
@@ -377,7 +394,14 @@ func (c *PatternValidator) SetOptional() Validator {
 
 // Validate the value
 func (c *PatternValidator) Validate(value any) Error {
-	str := value.(string)
+	str, ok := value.(string)
+	if !ok {
+		if c.optional {
+			return nil
+		} else {
+			return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", c.name))
+		}
+	}
 	if c.optional && str == "" {
 		return nil
 	}
@@ -451,7 +475,14 @@ func (c *EmailValidator) SetOptional() Validator {
 
 // Validate the value
 func (c *EmailValidator) Validate(value any) Error {
-	str := value.(string)
+	str, ok := value.(string)
+	if !ok {
+		if c.optional {
+			return nil
+		} else {
+			return createError(c.name, c.message, "Please use a valid email address")
+		}
+	}
 	if c.optional && str == "" {
 		return nil
 	}

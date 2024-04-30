@@ -270,6 +270,29 @@ func TestStructFunc(t *testing.T) {
 	assert.Equal(t, errs.(Errors)[0].Error(), "custom error", "Error message")
 }
 
+func TestEmbeded(t *testing.T) {
+	type Deep struct {
+		DeepInt int `json:"deepInt"`
+	}
+	type Embed struct {
+		EmbedStr   string  `json:"embedStr"`
+		EmbedFloat float32 `json:"embedFloat"`
+		Deep       `json:"deep"`
+	}
+	type nestedType struct {
+		Top string
+		Embed
+	}
+	n := nestedType{}
+
+	rules := New(&n).Field(&n.Top, MinLength(3)).
+		Field(&n.Embed.EmbedStr, MaxLength(2), MinLength(1)).
+		Field(&n.EmbedFloat, Min(2)).
+		Field(&n.DeepInt, Min(5))
+	assert.Len(t, rules.Validate(nestedType{Top: "x"}).(Errors), 4, "All fail")
+	assert.Nil(t, rules.Validate(nestedType{Top: "abc", Embed: Embed{EmbedStr: "x", EmbedFloat: 3, Deep: Deep{5}}}), "All pass")
+}
+
 func TestMarshalJSON(t *testing.T) {
 	type exportType struct {
 		Str string
