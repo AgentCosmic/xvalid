@@ -294,12 +294,28 @@ func TestEmbeded(t *testing.T) {
 }
 
 func TestMarshalJSON(t *testing.T) {
+	type Embed struct {
+		EmbedStr string `json:"embedStr"`
+	}
 	type exportType struct {
+		Embed
 		Str string
 		Int int `json:"number,omitempty"`
 	}
 	e := exportType{}
-	rules := New(&e).Field(&e.Str, Required(), MaxLength(5)).Field(&e.Int, Min(10).SetOptional().SetMessage("my message"))
+	// json rules
+	rules := New(&e).
+		Field(&e.Str, Required(), MaxLength(5)).
+		Field(&e.Int, Min(10).SetOptional().SetMessage("my message")).
+		Field(&e.EmbedStr, Required())
 	j, _ := json.Marshal(rules)
-	assert.Equal(t, `{"Str":[{"rule":"required"},{"rule":"maxLength","max":5}],"number":[{"rule":"min","min":10,"message":"my message"}]}`, string(j), "Export rules to json")
+	assert.Equal(t,
+		`{"Str":[{"rule":"required"},{"rule":"maxLength","max":5}],"embedStr":[{"rule":"required"}],"number":[{"rule":"min","min":10,"message":"my message"}]}`,
+		string(j), "Export rules to json")
+	// json errors
+	errs := rules.Validate(e)
+	j, _ = json.Marshal(errs)
+	assert.Equal(t,
+		`[{"message":"Please enter the Str","field":"Str"},{"message":"Please enter the embedStr","field":"embedStr"}]`,
+		string(j), "Export errors json")
 }

@@ -50,7 +50,7 @@ func (c *RequiredValidator) Validate(value any) Error {
 		zero = true
 	}
 	if zero {
-		return createError(c.name, c.message, fmt.Sprintf("Please enter the %v", c.name))
+		return createError(c.name, c.message, fmt.Sprintf("Please enter the %v", jsonFieldName(c.name)))
 	}
 	return nil
 }
@@ -114,14 +114,14 @@ func (c *MinLengthValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", c.name, c.min))
+			return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.name), c.min))
 		}
 	}
 	if c.optional && str == "" {
 		return nil
 	}
 	if len([]rune(str)) < int(c.min) {
-		return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", c.name, c.min))
+		return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.name), c.min))
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (c *MaxLengthValidator) Validate(value any) Error {
 		return nil
 	}
 	if len([]rune(v)) > int(c.max) {
-		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", c.name, c.max))
+		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", jsonFieldName(c.name), c.max))
 	}
 	return nil
 }
@@ -245,7 +245,7 @@ func (c *MinValidator) SetOptional() Validator {
 func (c *MinValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
 	newError := func() Error {
-		return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %v or more", c.name, c.min))
+		return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %v or more", jsonFieldName(c.name), c.min))
 	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -318,7 +318,7 @@ func (c *MaxValidator) SetMessage(msg string) Validator {
 func (c *MaxValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
 	newError := func() Error {
-		return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %v or less", c.name, c.max))
+		return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %v or less", jsonFieldName(c.name), c.max))
 	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -399,7 +399,7 @@ func (c *PatternValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", c.name))
+			return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.name)))
 		}
 	}
 	if c.optional && str == "" {
@@ -408,7 +408,7 @@ func (c *PatternValidator) Validate(value any) Error {
 	if c.re.MatchString(str) {
 		return nil
 	}
-	return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", c.name))
+	return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.name)))
 }
 
 // MarshalJSON for this validator
@@ -480,7 +480,7 @@ func (c *EmailValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, "Please use a valid email address")
+			return createError(c.name, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.name)))
 		}
 	}
 	if c.optional && str == "" {
@@ -489,7 +489,7 @@ func (c *EmailValidator) Validate(value any) Error {
 	if emailRegex.MatchString(str) {
 		return nil
 	}
-	return createError(c.name, c.message, "Please use a valid email address")
+	return createError(c.name, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.name)))
 }
 
 // CanExport for this validator
@@ -548,7 +548,7 @@ func (c *OptionsValidator) Validate(value any) Error {
 			return nil
 		}
 	}
-	return createError(c.name, c.message, "Please select one of the valid options")
+	return createError(c.name, c.message, fmt.Sprintf("Please select one of the valid options for %s", jsonFieldName(c.name)))
 }
 
 // CanExport for this validator

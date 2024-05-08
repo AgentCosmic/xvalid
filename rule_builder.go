@@ -15,8 +15,8 @@ type Error interface {
 
 // validationError implements Error interface
 type validationError struct {
-	Message   string `json:"message"`
-	FieldName string `json:"field"`
+	Message   string
+	FieldName string
 }
 
 // Error message
@@ -27,6 +27,14 @@ func (v validationError) Error() string {
 // Field name
 func (v validationError) Field() string {
 	return v.FieldName
+}
+
+func (e validationError) MarshalJSON() ([]byte, error) {
+	// only use the last field name for embeded structs
+	return json.MarshalIndent(struct {
+		Message   string `json:"message"`
+		FieldName string `json:"field"`
+	}{e.Message, jsonFieldName(e.FieldName)}, "", "	")
 }
 
 // NewError creates new validation error
@@ -133,7 +141,7 @@ func (r Rules) MarshalJSON() ([]byte, error) {
 		if !v.CanExport() {
 			continue
 		}
-		name := v.Name()
+		name := jsonFieldName(v.Name())
 		rules, ok := rmap[name]
 		if !ok {
 			rules = make([]any, 0)
@@ -229,4 +237,9 @@ func structToMap(structPtr any) map[string]any {
 		}
 	}
 	return vmap
+}
+
+func jsonFieldName(field string) string {
+	parts := strings.Split(field, ".")
+	return parts[len(parts)-1]
 }
