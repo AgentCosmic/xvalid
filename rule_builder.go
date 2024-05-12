@@ -57,6 +57,15 @@ func (v Errors) Error() string {
 	return joinSentences(list)
 }
 
+// Unwrap errors
+func (v Errors) Unwrap() []error {
+	errs := make([]error, len(v))
+	for _, e := range v {
+		errs = append(errs, e)
+	}
+	return errs
+}
+
 // -----
 
 // Validator to implement a rule
