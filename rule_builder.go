@@ -222,8 +222,7 @@ func joinSentences(list []string) string {
 	if l == 0 {
 		return ""
 	}
-	sentence := strings.Join(list, ". ")
-	return sentence[:len(sentence)-1]
+	return strings.Join(list, ". ") + "."
 }
 
 // structToMap converts struct to map and uses the json name if available
