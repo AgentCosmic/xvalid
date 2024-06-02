@@ -16,7 +16,7 @@ type Error interface {
 // validationError implements Error interface
 type validationError struct {
 	message string
-	fild    []string
+	field   []string
 }
 
 // Error message
@@ -26,7 +26,7 @@ func (v validationError) Error() string {
 
 // Field name
 func (v validationError) Field() []string {
-	return v.fild
+	return v.field
 }
 
 func (e validationError) MarshalJSON() ([]byte, error) {
@@ -34,13 +34,13 @@ func (e validationError) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(struct {
 		Message   string `json:"message"`
 		FieldName string `json:"field"`
-	}{e.message, jsonFieldName(e.fild)}, "", "	")
+	}{e.message, jsonFieldName(e.field)}, "", "	")
 }
 
 // NewError creates new validation error
 func NewError(message string, field []string) Error {
 	return &validationError{
-		fild:    field,
+		field:   field,
 		message: message,
 	}
 }
@@ -60,8 +60,8 @@ func (v Errors) Error() string {
 // Unwrap errors
 func (v Errors) Unwrap() []error {
 	errs := make([]error, len(v))
-	for _, e := range v {
-		errs = append(errs, e)
+	for i := range v {
+		errs[i] = v[i]
 	}
 	return errs
 }
@@ -107,7 +107,7 @@ func (r Rules) Struct(validators ...Validator) Rules {
 }
 
 // Validate a struct and return Errors
-func (r Rules) Validate(subject any) error {
+func (r Rules) Validate(subject any) Errors {
 	errs := make(Errors, 0)
 	vmap := structToMap(subject)
 	for _, validator := range r.validators {
@@ -246,6 +246,7 @@ func structToMap(structPtr any) map[string]any {
 	return vmap
 }
 
+// jsonFieldName returns the last field name
 func jsonFieldName(field []string) string {
 	if field == nil {
 		return ""

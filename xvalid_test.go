@@ -26,7 +26,7 @@ func TestRequired(t *testing.T) {
 		Field(&r.Time, Required()).
 		Field(&r.Ptr, Required()).
 		Validate(r)
-	assert.Len(t, errs.(Errors), 6, "All not set")
+	assert.Len(t, errs, 6, "All not set")
 
 	s := ""
 	r = requiredType{
@@ -39,7 +39,7 @@ func TestRequired(t *testing.T) {
 		Field(&r.Time, Required()).
 		Field(&r.Ptr, Required()).
 		Validate(r)
-	assert.Len(t, errs.(Errors), 3, "Complex type set but empty")
+	assert.Len(t, errs, 3, "Complex type set but empty")
 
 	s = "ok"
 	r = requiredType{
@@ -60,9 +60,9 @@ func TestRequired(t *testing.T) {
 
 	msg := "custom message"
 	assert.Equal(t, msg, New(&r).Field(&r.Number, Required().SetMessage(msg)).
-		Validate(requiredType{}).(Errors)[0].Error(), "Custom error message")
+		Validate(requiredType{})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&r).Field(&r.Number, Required()).
-		Validate(requiredType{}).(Errors)[0].Error(), "Default error message")
+		Validate(requiredType{})[0].Error(), "Default error message")
 }
 
 func TestMinLength(t *testing.T) {
@@ -73,17 +73,17 @@ func TestMinLength(t *testing.T) {
 	rules := New(&str).Field(&str.Field, MinLength(2))
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Long enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit min")
-	assert.Len(t, rules.Validate(strType{Field: "1"}).(Errors), 1, "Too short")
-	assert.Len(t, rules.Validate(strType{Field: "£"}).(Errors), 1, "Multi-byte characters too short")
+	assert.Len(t, rules.Validate(strType{Field: "1"}), 1, "Too short")
+	assert.Len(t, rules.Validate(strType{Field: "£"}), 1, "Multi-byte characters too short")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&str).Field(&str.Field, MinLength(2).SetMessage(msg)).
-		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")
+		Validate(strType{Field: "1"})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MinLength(2)).
-		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Default error message")
+		Validate(strType{Field: "1"})[0].Error(), "Default error message")
 	// optional
 	rules = New(&str).Field(&str.Field, MinLength(3).SetOptional())
 	assert.Nil(t, rules.Validate(strType{Field: ""}), "Invalid but zero")
-	assert.Len(t, rules.Validate(strType{Field: " "}).(Errors), 1, "Invalid and not zero")
+	assert.Len(t, rules.Validate(strType{Field: " "}), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(strType{Field: "123"}), "Valid and not zero")
 }
 
@@ -93,15 +93,15 @@ func TestMaxLength(t *testing.T) {
 	}
 	str := strType{}
 	rules := New(&str).Field(&str.Field, MaxLength(2))
-	assert.Len(t, rules.Validate(strType{Field: "123"}).(Errors), 1, "Short enough")
+	assert.Len(t, rules.Validate(strType{Field: "123"}), 1, "Short enough")
 	assert.Nil(t, rules.Validate(strType{Field: "12"}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(strType{Field: "1"}), "Short enough")
 	assert.Nil(t, rules.Validate(strType{Field: "世界"}), "Multi-byte characters are short enough")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&str).Field(&str.Field, MaxLength(0).SetMessage(msg)).
-		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Custom error message")
+		Validate(strType{Field: "1"})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&str).Field(&str.Field, MaxLength(0)).
-		Validate(strType{Field: "1"}).(Errors)[0].Error(), "Default error message")
+		Validate(strType{Field: "1"})[0].Error(), "Default error message")
 }
 
 func TestMinInt(t *testing.T) {
@@ -113,31 +113,31 @@ func TestMinInt(t *testing.T) {
 	rules := New(&i).Field(&i.Int, Min(0))
 	assert.Nil(t, rules.Validate(intType{Int: 1}), "Big enough")
 	assert.Nil(t, rules.Validate(intType{Int: 0}), "Exactly hit min")
-	assert.Len(t, rules.Validate(intType{Int: -1}).(Errors), 1, "Too low")
+	assert.Len(t, rules.Validate(intType{Int: -1}), 1, "Too low")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&i).Field(&i.Int, Min(0).SetMessage(msg)).
-		Validate(intType{Int: -1}).(Errors)[0].Error(), "Custom error message")
+		Validate(intType{Int: -1})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&i).Field(&i.Int, Min(0)).
-		Validate(intType{Int: -1}).(Errors)[0].Error(), "Default error message")
+		Validate(intType{Int: -1})[0].Error(), "Default error message")
 	// optional
 	rules = New(&i).Field(&i.Int, Min(5).SetOptional())
 	assert.Nil(t, rules.Validate(intType{Int: 0}), "Invalid but zero")
-	assert.Len(t, rules.Validate(intType{Int: 1}).(Errors), 1, "Invalid and not zero")
+	assert.Len(t, rules.Validate(intType{Int: 1}), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(intType{Int: 5}), "Valid and not zero")
 
 	// float
 	rules = New(&i).Field(&i.Float, Min(0))
 	assert.Nil(t, rules.Validate(intType{Float: 1}), "Big enough")
 	assert.Nil(t, rules.Validate(intType{Float: 0}), "Exactly hit min")
-	assert.Len(t, rules.Validate(intType{Float: -1}).(Errors), 1, "Too low")
+	assert.Len(t, rules.Validate(intType{Float: -1}), 1, "Too low")
 	assert.Equal(t, msg, New(&i).Field(&i.Float, Min(0).SetMessage(msg)).
-		Validate(intType{Float: -1}).(Errors)[0].Error(), "Custom error message")
+		Validate(intType{Float: -1})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&i).Field(&i.Float, Min(0)).
-		Validate(intType{Float: -1}).(Errors)[0].Error(), "Default error message")
+		Validate(intType{Float: -1})[0].Error(), "Default error message")
 	// optional
 	rules = New(&i).Field(&i.Float, Min(5).SetOptional())
 	assert.Nil(t, rules.Validate(intType{Float: 0}), "Invalid but zero")
-	assert.Len(t, rules.Validate(intType{Float: 1}).(Errors), 1, "Invalid and not zero")
+	assert.Len(t, rules.Validate(intType{Float: 1}), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(intType{Float: 5}), "Valid and not zero")
 }
 
@@ -148,24 +148,24 @@ func TestMaxInt(t *testing.T) {
 	}
 	i := intType{}
 	rules := New(&i).Field(&i.Field, Max(0))
-	assert.Len(t, rules.Validate(intType{Field: 1}).(Errors), 1, "Too big")
+	assert.Len(t, rules.Validate(intType{Field: 1}), 1, "Too big")
 	assert.Nil(t, rules.Validate(intType{Field: 0}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(intType{Field: -1}), "Low engouh")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&i).Field(&i.Field, Max(0).SetMessage(msg)).
-		Validate(intType{Field: 1}).(Errors)[0].Error(), "Custom error message")
+		Validate(intType{Field: 1})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&i).Field(&i.Field, Max(0)).
-		Validate(intType{Field: 1}).(Errors)[0].Error(), "Default error message")
+		Validate(intType{Field: 1})[0].Error(), "Default error message")
 
 	// float
 	rules = New(&i).Field(&i.Float, Max(0))
-	assert.Len(t, rules.Validate(intType{Float: 1}).(Errors), 1, "Too big")
+	assert.Len(t, rules.Validate(intType{Float: 1}), 1, "Too big")
 	assert.Nil(t, rules.Validate(intType{Float: 0}), "Exactly hit max")
 	assert.Nil(t, rules.Validate(intType{Float: -1}), "Low engouh")
 	assert.Equal(t, msg, New(&i).Field(&i.Float, Max(0).SetMessage(msg)).
-		Validate(intType{Float: 1}).(Errors)[0].Error(), "Custom error message")
+		Validate(intType{Float: 1})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&i).Field(&i.Float, Max(0)).
-		Validate(intType{Float: 1}).(Errors)[0].Error(), "Default error message")
+		Validate(intType{Float: 1})[0].Error(), "Default error message")
 }
 
 func TestPattern(t *testing.T) {
@@ -176,16 +176,16 @@ func TestPattern(t *testing.T) {
 	rules := New(&p).Field(&p.Field, Pattern(`\d{2}`))
 	assert.Nil(t, rules.Validate(patternType{Field: "00"}), "Exact match")
 	assert.Nil(t, rules.Validate(patternType{Field: "1234"}), "Submatch also works")
-	assert.Len(t, rules.Validate(patternType{Field: "wrong"}).(Errors), 1, "Pattern is wrong")
+	assert.Len(t, rules.Validate(patternType{Field: "wrong"}), 1, "Pattern is wrong")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&p).Field(&p.Field, Pattern(`\d{2}`).SetMessage(msg)).
-		Validate(patternType{Field: "message"}).(Errors)[0].Error(), "Custom error message")
+		Validate(patternType{Field: "message"})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&p).Field(&p.Field, Pattern(`\d{2}`)).
-		Validate(patternType{Field: "message"}).(Errors)[0].Error(), "Default error message")
+		Validate(patternType{Field: "message"})[0].Error(), "Default error message")
 	// optional
 	rules = New(&p).Field(&p.Field, Pattern(`\w{3,}`).SetOptional())
 	assert.Nil(t, rules.Validate(patternType{Field: ""}), "Invalid but zero")
-	assert.Len(t, rules.Validate(patternType{Field: " "}).(Errors), 1, "Invalid and not zero")
+	assert.Len(t, rules.Validate(patternType{Field: " "}), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(patternType{Field: "123"}), "Valid and not zero")
 }
 
@@ -195,17 +195,17 @@ func TestEmail(t *testing.T) {
 	}
 	p := emailType{}
 	rules := New(&p).Field(&p.Field, Email())
-	assert.Len(t, rules.Validate(emailType{Field: "fake"}).(Errors), 1, "Invalid email address")
+	assert.Len(t, rules.Validate(emailType{Field: "fake"}), 1, "Invalid email address")
 	assert.Nil(t, rules.Validate(emailType{Field: "test@mail.com"}), "Valid email address")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&p).Field(&p.Field, Email().SetMessage(msg)).
-		Validate(emailType{Field: "invalid"}).(Errors)[0].Error(), "Custom error message")
+		Validate(emailType{Field: "invalid"})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&p).Field(&p.Field, Email()).
-		Validate(emailType{Field: "invalid"}).(Errors)[0].Error(), "Default error message")
+		Validate(emailType{Field: "invalid"})[0].Error(), "Default error message")
 	// optional
 	rules = New(&p).Field(&p.Field, Email().SetOptional())
 	assert.Nil(t, rules.Validate(emailType{Field: ""}), "Invalid but zero")
-	assert.Len(t, rules.Validate(emailType{Field: "fake"}).(Errors), 1, "Invalid and not zero")
+	assert.Len(t, rules.Validate(emailType{Field: "fake"}), 1, "Invalid and not zero")
 	assert.Nil(t, rules.Validate(emailType{Field: "test@mail.com"}), "Valid and not zero")
 }
 
@@ -217,20 +217,20 @@ func TestOptions(t *testing.T) {
 	o := optionsType{}
 	// string
 	rules := New(&o).Field(&o.Str, Options("a", "b", "c"))
-	assert.Len(t, rules.Validate(optionsType{Str: "x"}).(Errors), 1, "Not in options")
+	assert.Len(t, rules.Validate(optionsType{Str: "x"}), 1, "Not in options")
 	assert.Nil(t, rules.Validate(optionsType{Str: "b"}), "Valid option")
 	msg := "custom message"
 	assert.Equal(t, msg, New(&o).Field(&o.Str, Options().SetMessage(msg)).
-		Validate(optionsType{Str: "invalid"}).(Errors)[0].Error(), "Custom error message")
+		Validate(optionsType{Str: "invalid"})[0].Error(), "Custom error message")
 	assert.NotEqual(t, msg, New(&o).Field(&o.Str, Options()).
-		Validate(optionsType{Str: "invalid"}).(Errors)[0].Error(), "Default error message")
+		Validate(optionsType{Str: "invalid"})[0].Error(), "Default error message")
 	// int
 	rules = New(&o).Field(&o.Int, Options(1, 2, 3))
-	assert.Len(t, rules.Validate(optionsType{Int: 5}).(Errors), 1, "Not in options")
+	assert.Len(t, rules.Validate(optionsType{Int: 5}), 1, "Not in options")
 	assert.Nil(t, rules.Validate(optionsType{Int: 1}), "Valid option")
 	// mixed type
 	rules = New(&o).Field(&o.Int, Options("a", 5, make([]byte, 0)))
-	assert.Len(t, rules.Validate(optionsType{Int: -1}).(Errors), 1, "Not in options")
+	assert.Len(t, rules.Validate(optionsType{Int: -1}), 1, "Not in options")
 	assert.Nil(t, rules.Validate(optionsType{Int: 5}), "Valid option")
 }
 
@@ -247,7 +247,7 @@ func TestFieldFunc(t *testing.T) {
 	p := funcTest{}
 	rules := New(&p).Field(&p.Field, FieldFunc(checker))
 	assert.Nil(t, rules.Validate(funcTest{Field: "valid"}), "Valid")
-	assert.Len(t, rules.Validate(funcTest{Field: "invalid"}).(Errors), 1, "Invalid")
+	assert.Len(t, rules.Validate(funcTest{Field: "invalid"}), 1, "Invalid")
 }
 
 func TestStructFunc(t *testing.T) {
@@ -266,8 +266,8 @@ func TestStructFunc(t *testing.T) {
 	rules := New(&p).Struct(StructFunc(checker))
 	assert.Nil(t, rules.Validate(funcTest{A: 3, B: 10}), "Valid")
 	errs := rules.Validate(funcTest{A: 3, B: 1})
-	assert.Len(t, errs.(Errors), 1, "Invalid")
-	assert.Equal(t, errs.(Errors)[0].Error(), "custom error", "Error message")
+	assert.Len(t, errs, 1, "Invalid")
+	assert.Equal(t, errs[0].Error(), "custom error", "Error message")
 }
 
 func TestEmbeded(t *testing.T) {
@@ -289,7 +289,7 @@ func TestEmbeded(t *testing.T) {
 		Field(&n.Embed.EmbedStr, MaxLength(2), MinLength(1)).
 		Field(&n.EmbedFloat, Min(2)).
 		Field(&n.DeepInt, Min(5))
-	assert.Len(t, rules.Validate(nestedType{Top: "x"}).(Errors), 4, "All fail")
+	assert.Len(t, rules.Validate(nestedType{Top: "x"}), 4, "All fail")
 	assert.Nil(t, rules.Validate(nestedType{Top: "abc", Embed: Embed{EmbedStr: "x", EmbedFloat: 3, Deep: Deep{5}}}), "All pass")
 }
 
