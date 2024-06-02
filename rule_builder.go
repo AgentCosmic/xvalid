@@ -45,23 +45,62 @@ func NewError(message string, field []string) Error {
 	}
 }
 
-// Errors is a list of Error
-type Errors []Error
+// ErrorSlice is a list of Error
+type ErrorSlice []Error
 
 // Error will combine all errors into a list of sentences
-func (v Errors) Error() string {
-	list := make([]string, len(v))
-	for i := range v {
-		list[i] = v[i].Error()
+func (e ErrorSlice) Error() string {
+	list := make([]string, len(e))
+	for i := range e {
+		list[i] = e[i].Error()
 	}
 	return joinSentences(list)
 }
 
 // Unwrap errors
-func (v Errors) Unwrap() []error {
-	errs := make([]error, len(v))
-	for i := range v {
-		errs[i] = v[i]
+func (e ErrorSlice) Unwrap() []error {
+	errs := make([]error, len(e))
+	for i := range e {
+		errs[i] = e[i]
+	}
+	return errs
+}
+
+// ToMap converts to map
+func (e ErrorSlice) ToMap() ErrorMap {
+	errs := make(ErrorMap)
+	for i, err := range e {
+		errs[jsonFieldName(err.Field())] = e[i]
+	}
+	return errs
+}
+
+// ErrorMap is a map of Error
+type ErrorMap map[string]Error
+
+// Error will combine all errors into a list of sentences
+func (e ErrorMap) Error() string {
+	list := make([]string, 0)
+	for _, err := range e {
+		list = append(list, err.Error())
+	}
+	return joinSentences(list)
+}
+
+// Unwrap errors
+func (e ErrorMap) Unwrap() []error {
+	errs := make([]error, 0)
+	for _, err := range e {
+		errs = append(errs, err)
+	}
+	return errs
+}
+
+// ToSlice converts to slice
+func (e ErrorMap) ToSlice() ErrorSlice {
+	errs := make(ErrorSlice, 0)
+	for _, err := range e {
+		errs = append(errs, err)
 	}
 	return errs
 }
@@ -107,8 +146,8 @@ func (r Rules) Struct(validators ...Validator) Rules {
 }
 
 // Validate a struct and return Errors
-func (r Rules) Validate(subject any) Errors {
-	errs := make(Errors, 0)
+func (r Rules) Validate(subject any) ErrorSlice {
+	errs := make(ErrorSlice, 0)
 	vmap := structToMap(subject)
 	for _, validator := range r.validators {
 		var err Error
