@@ -154,7 +154,7 @@ func (r Rules) Struct(validators ...Validator) Rules {
 }
 
 // Validate a struct and return Errors
-func (r Rules) Validate(subject any) ErrorSlice {
+func (r Rules) Validate(subject any) error {
 	errs := make(ErrorSlice, 0)
 	vmap := structToMap(subject)
 	for _, validator := range r.validators {
