@@ -38,7 +38,7 @@ func (e validationError) MarshalJSON() ([]byte, error) {
 }
 
 // NewError creates new validation error
-func NewError(message string, field []string) Error {
+func NewError(message string, field... string) Error {
 	return &validationError{
 		field:   field,
 		message: message,
@@ -103,6 +103,14 @@ func (e ErrorMap) ToSlice() ErrorSlice {
 		errs = append(errs, err)
 	}
 	return errs
+}
+
+func (e ErrorMap) MarshalJSON() ([]byte, error) {
+	m := make(map[string]string)
+	for k, v := range e {
+		m[k] = v.Error()
+	}
+	return json.Marshal(m)
 }
 
 // -----

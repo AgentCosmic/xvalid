@@ -666,9 +666,9 @@ func StructFunc(f func(any) Error) Validator {
 
 func createError(field []string, custom string, fallback string) Error {
 	if custom != "" {
-		return NewError(custom, field)
+		return NewError(custom, field...)
 	}
-	return NewError(fallback, field)
+	return NewError(fallback, field...)
 }
 
 func toInt64(value any) int64 {

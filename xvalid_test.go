@@ -240,7 +240,7 @@ func TestFieldFunc(t *testing.T) {
 	}
 	checker := func(field []string, value any) Error {
 		if value.(string) == "invalid" {
-			return NewError("Invalid field", field)
+			return NewError("Invalid field", field...)
 		}
 		return nil
 	}
@@ -258,7 +258,7 @@ func TestStructFunc(t *testing.T) {
 	checker := func(value any) Error {
 		s := value.(funcTest)
 		if s.A > s.B {
-			return NewError("custom error", nil)
+			return NewError("custom error")
 		}
 		return nil
 	}
@@ -318,4 +318,10 @@ func TestMarshalJSON(t *testing.T) {
 	assert.Equal(t,
 		`[{"message":"Please enter the Str","field":"Str"},{"message":"Please enter the embedStr","field":"embedStr"}]`,
 		string(j), "Export errors json")
+	// as map
+	errsMap := errs.ToMap()
+	j, _ = json.Marshal(errsMap)
+	assert.Equal(t,
+		`{"Str":"Please enter the Str","embedStr":"Please enter the embedStr"}`,
+		string(j), "Export errors json as map")
 }
