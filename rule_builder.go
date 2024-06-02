@@ -10,23 +10,23 @@ import (
 // Error when a rule is broken
 type Error interface {
 	Error() string
-	Field() string
+	Field() []string
 }
 
 // validationError implements Error interface
 type validationError struct {
-	Message   string
-	FieldName string
+	message string
+	fild    []string
 }
 
 // Error message
 func (v validationError) Error() string {
-	return v.Message
+	return v.message
 }
 
 // Field name
-func (v validationError) Field() string {
-	return v.FieldName
+func (v validationError) Field() []string {
+	return v.fild
 }
 
 func (e validationError) MarshalJSON() ([]byte, error) {
@@ -34,14 +34,14 @@ func (e validationError) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(struct {
 		Message   string `json:"message"`
 		FieldName string `json:"field"`
-	}{e.Message, jsonFieldName(e.FieldName)}, "", "	")
+	}{e.message, jsonFieldName(e.fild)}, "", "	")
 }
 
 // NewError creates new validation error
-func NewError(message, fieldName string) Error {
+func NewError(message string, field []string) Error {
 	return &validationError{
-		FieldName: fieldName,
-		Message:   message,
+		fild:    field,
+		message: message,
 	}
 }
 
@@ -70,8 +70,8 @@ func (v Errors) Unwrap() []error {
 
 // Validator to implement a rule
 type Validator interface {
-	SetName(string)
-	Name() string
+	SetField(...string)
+	Field() []string
 	CanExport() bool
 	SetMessage(string) Validator
 	Validate(any) Error
@@ -94,7 +94,7 @@ func New(structPtr any) Rules {
 // Field adds validators for a field
 func (r Rules) Field(fieldPtr any, validators ...Validator) Rules {
 	for _, validator := range validators {
-		validator.SetName(getFieldName(r.structPtr, fieldPtr))
+		validator.SetField(getField(r.structPtr, fieldPtr)...)
 		r.validators = append(r.validators, validator)
 	}
 	return r
@@ -112,14 +112,13 @@ func (r Rules) Validate(subject any) error {
 	vmap := structToMap(subject)
 	for _, validator := range r.validators {
 		var err Error
-		if validator.Name() == "" {
+		if validator.Field() == nil || len(validator.Field()) == 0 {
 			// struct validation
 			err = validator.Validate(subject)
 		} else {
 			// field validation
-			path := strings.Split(validator.Name(), ".")
 			v := vmap
-			for _, p := range path {
+			for _, p := range validator.Field() {
 				switch v2 := v[p].(type) {
 				default:
 					err = validator.Validate(v2)
@@ -150,7 +149,7 @@ func (r Rules) MarshalJSON() ([]byte, error) {
 		if !v.CanExport() {
 			continue
 		}
-		name := jsonFieldName(v.Name())
+		name := jsonFieldName(v.Field())
 		rules, ok := rmap[name]
 		if !ok {
 			rules = make([]any, 0)
@@ -163,7 +162,7 @@ func (r Rules) MarshalJSON() ([]byte, error) {
 
 // -------------------
 
-func getFieldName(structPtr any, fieldPtr any) string {
+func getField(structPtr any, fieldPtr any) []string {
 	value := reflect.ValueOf(structPtr)
 	if value.Kind() != reflect.Ptr || !value.IsNil() && value.Elem().Kind() != reflect.Struct {
 		panic(errors.New("struct is not pointer"))
@@ -190,7 +189,7 @@ func getFieldName(structPtr any, fieldPtr any) string {
 		}
 		parts = append(parts, tag)
 	}
-	return strings.Join(parts, ".")
+	return parts
 }
 
 // findStructField looks for a field in the given struct.
@@ -247,7 +246,9 @@ func structToMap(structPtr any) map[string]any {
 	return vmap
 }
 
-func jsonFieldName(field string) string {
-	parts := strings.Split(field, ".")
-	return parts[len(parts)-1]
+func jsonFieldName(field []string) string {
+	if field == nil {
+		return ""
+	}
+	return field[len(field)-1]
 }

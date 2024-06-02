@@ -238,9 +238,9 @@ func TestFieldFunc(t *testing.T) {
 	type funcTest struct {
 		Field string
 	}
-	checker := func(fieldName string, value any) Error {
+	checker := func(field []string, value any) Error {
 		if value.(string) == "invalid" {
-			return NewError("Invalid field", fieldName)
+			return NewError("Invalid field", field)
 		}
 		return nil
 	}
@@ -258,7 +258,7 @@ func TestStructFunc(t *testing.T) {
 	checker := func(value any) Error {
 		s := value.(funcTest)
 		if s.A > s.B {
-			return NewError("custom error", "")
+			return NewError("custom error", nil)
 		}
 		return nil
 	}

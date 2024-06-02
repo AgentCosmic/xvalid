@@ -15,18 +15,18 @@ import (
 
 // RequiredValidator field must not be zero
 type RequiredValidator struct {
-	name    string
+	field   []string
 	message string
 }
 
-// Name of the field
-func (c *RequiredValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *RequiredValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *RequiredValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *RequiredValidator) SetField(field ...string) {
+	c.field = field
 }
 
 // SetMessage set error message
@@ -50,7 +50,7 @@ func (c *RequiredValidator) Validate(value any) Error {
 		zero = true
 	}
 	if zero {
-		return createError(c.name, c.message, fmt.Sprintf("Please enter the %v", jsonFieldName(c.name)))
+		return createError(c.field, c.message, fmt.Sprintf("Please enter the %v", jsonFieldName(c.field)))
 	}
 	return nil
 }
@@ -79,20 +79,20 @@ func Required() *RequiredValidator {
 
 // MinLengthValidator field must have minimum length
 type MinLengthValidator struct {
-	name     string
+	field    []string
 	message  string
 	min      int64
 	optional bool
 }
 
-// Name of the field
-func (c *MinLengthValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *MinLengthValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *MinLengthValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *MinLengthValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -114,14 +114,14 @@ func (c *MinLengthValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.name), c.min))
+			return createError(c.field, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.field), c.min))
 		}
 	}
 	if c.optional && str == "" {
 		return nil
 	}
 	if len([]rune(str)) < int(c.min) {
-		return createError(c.name, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.name), c.min))
+		return createError(c.field, c.message, fmt.Sprintf("Please lengthen %s to %d characters or more", jsonFieldName(c.field), c.min))
 	}
 	return nil
 }
@@ -153,19 +153,19 @@ func MinLength(min int64) *MinLengthValidator {
 
 // MaxLengthValidator field have maximum length
 type MaxLengthValidator struct {
-	name    string
+	ifeld   []string
 	message string
 	max     int64
 }
 
-// Name of the field
-func (c *MaxLengthValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *MaxLengthValidator) Field() []string {
+	return c.ifeld
 }
 
-// SetName of the field
-func (c *MaxLengthValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *MaxLengthValidator) SetField(name ...string) {
+	c.ifeld = name
 }
 
 // SetMessage set error message
@@ -181,7 +181,7 @@ func (c *MaxLengthValidator) Validate(value any) Error {
 		return nil
 	}
 	if len([]rune(v)) > int(c.max) {
-		return createError(c.name, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", jsonFieldName(c.name), c.max))
+		return createError(c.ifeld, c.message, fmt.Sprintf("Please shorten %s to %d characters or less", jsonFieldName(c.ifeld), c.max))
 	}
 	return nil
 }
@@ -213,20 +213,20 @@ func MaxLength(max int64) *MaxLengthValidator {
 
 // MinValidator field have minimum value
 type MinValidator struct {
-	name     string
+	field    []string
 	message  string
 	min      int64
 	optional bool
 }
 
-// Name of the field
-func (c *MinValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *MinValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *MinValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *MinValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -245,7 +245,7 @@ func (c *MinValidator) SetOptional() Validator {
 func (c *MinValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
 	newError := func() Error {
-		return createError(c.name, c.message, fmt.Sprintf("Please increase %s to be %v or more", jsonFieldName(c.name), c.min))
+		return createError(c.field, c.message, fmt.Sprintf("Please increase %s to be %v or more", jsonFieldName(c.field), c.min))
 	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -293,19 +293,19 @@ func Min(min int64) *MinValidator {
 
 // MaxValidator field have maximum value
 type MaxValidator struct {
-	name    string
+	field   []string
 	message string
 	max     int64
 }
 
-// Name of the field
-func (c *MaxValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *MaxValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *MaxValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *MaxValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -318,7 +318,7 @@ func (c *MaxValidator) SetMessage(msg string) Validator {
 func (c *MaxValidator) Validate(value any) Error {
 	rv := reflect.ValueOf(value)
 	newError := func() Error {
-		return createError(c.name, c.message, fmt.Sprintf("Please decrease %s to be %v or less", jsonFieldName(c.name), c.max))
+		return createError(c.field, c.message, fmt.Sprintf("Please decrease %s to be %v or less", jsonFieldName(c.field), c.max))
 	}
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -364,20 +364,20 @@ func Max(max int64) *MaxValidator {
 
 // PatternValidator field must match regexp
 type PatternValidator struct {
-	name     string
+	field    []string
 	message  string
 	re       *regexp.Regexp
 	optional bool
 }
 
-// Name of the field
-func (c *PatternValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *PatternValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *PatternValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *PatternValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -399,7 +399,7 @@ func (c *PatternValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.name)))
+			return createError(c.field, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.field)))
 		}
 	}
 	if c.optional && str == "" {
@@ -408,7 +408,7 @@ func (c *PatternValidator) Validate(value any) Error {
 	if c.re.MatchString(str) {
 		return nil
 	}
-	return createError(c.name, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.name)))
+	return createError(c.field, c.message, fmt.Sprintf("Please correct %s into a valid format", jsonFieldName(c.field)))
 }
 
 // MarshalJSON for this validator
@@ -439,7 +439,7 @@ func Pattern(pattern string) *PatternValidator {
 // EmailValidator field must be a valid email address
 type EmailValidator struct {
 	Validator
-	name     string
+	field    []string
 	message  string
 	optional bool
 }
@@ -451,14 +451,14 @@ func Email() *EmailValidator {
 	return &EmailValidator{}
 }
 
-// Name of the field
-func (c *EmailValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *EmailValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *EmailValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *EmailValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -480,7 +480,7 @@ func (c *EmailValidator) Validate(value any) Error {
 		if c.optional {
 			return nil
 		} else {
-			return createError(c.name, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.name)))
+			return createError(c.field, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.field)))
 		}
 	}
 	if c.optional && str == "" {
@@ -489,7 +489,7 @@ func (c *EmailValidator) Validate(value any) Error {
 	if emailRegex.MatchString(str) {
 		return nil
 	}
-	return createError(c.name, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.name)))
+	return createError(c.field, c.message, fmt.Sprintf("Please use a valid email address for %s", jsonFieldName(c.field)))
 }
 
 // CanExport for this validator
@@ -518,19 +518,19 @@ func IsEmail(email string) bool {
 
 // OptionsValidator for whitelisting accepted values
 type OptionsValidator struct {
-	name    string
+	field   []string
 	message string
 	options []any
 }
 
-// Name of the field
-func (c *OptionsValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *OptionsValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *OptionsValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *OptionsValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -548,7 +548,7 @@ func (c *OptionsValidator) Validate(value any) Error {
 			return nil
 		}
 	}
-	return createError(c.name, c.message, fmt.Sprintf("Please select one of the valid options for %s", jsonFieldName(c.name)))
+	return createError(c.field, c.message, fmt.Sprintf("Please select one of the valid options for %s", jsonFieldName(c.field)))
 }
 
 // CanExport for this validator
@@ -578,19 +578,19 @@ func Options(options ...any) Validator {
 
 // FieldFuncValidator for validating with custom function
 type FieldFuncValidator struct {
-	name    string
+	field   []string
 	message string
-	checker func(string, any) Error
+	checker func([]string, any) Error
 }
 
-// Name of the field
-func (c *FieldFuncValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *FieldFuncValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *FieldFuncValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *FieldFuncValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -601,7 +601,7 @@ func (c *FieldFuncValidator) SetMessage(msg string) Validator {
 
 // Validate the value
 func (c *FieldFuncValidator) Validate(value any) Error {
-	return c.checker(c.name, value)
+	return c.checker(c.field, value)
 }
 
 // CanExport for this validator
@@ -610,7 +610,7 @@ func (c *FieldFuncValidator) CanExport() bool {
 }
 
 // FieldFunc for validating with custom function
-func FieldFunc(f func(string, any) Error) Validator {
+func FieldFunc(f func([]string, any) Error) Validator {
 	return &FieldFuncValidator{
 		checker: f,
 	}
@@ -622,19 +622,19 @@ func FieldFunc(f func(string, any) Error) Validator {
 
 // StructFuncValidator validate struct with custom function. Add to rules with .Struct().
 type StructFuncValidator struct {
-	name    string
+	field   []string
 	message string
 	checker func(any) Error
 }
 
-// Name of the field
-func (c *StructFuncValidator) Name() string {
-	return c.name
+// Field of the field
+func (c *StructFuncValidator) Field() []string {
+	return c.field
 }
 
-// SetName of the field
-func (c *StructFuncValidator) SetName(name string) {
-	c.name = name
+// SetField of the field
+func (c *StructFuncValidator) SetField(name ...string) {
+	c.field = name
 }
 
 // SetMessage set error message
@@ -664,11 +664,11 @@ func StructFunc(f func(any) Error) Validator {
 // ====================
 //
 
-func createError(name, custom, fallback string) Error {
+func createError(field []string, custom string, fallback string) Error {
 	if custom != "" {
-		return NewError(custom, name)
+		return NewError(custom, field)
 	}
-	return NewError(fallback, name)
+	return NewError(fallback, field)
 }
 
 func toInt64(value any) int64 {

@@ -46,13 +46,13 @@ func (store Store) Rules() xvalid.Rules {
 			xvalid.MaxLength(80).SetMessage("Please shorten name to 80 characters or less"),
 			xvalid.Pattern("^[a-zA-Z0-9_]+$").SetOptional().SetMessage("Name may contain alphabets, numbers and underscores"),
 			xvalid.Pattern("[a-zA-Z]").SetOptional().SetMessage("Name must contain at least 1 alphabet"),
-			xvalid.FieldFunc(func(fieldName string, value any) xvalid.Error {
+			xvalid.FieldFunc(func(field []string, value any) xvalid.Error {
 				name := value.(string)
 				if name == "" {
 					return nil
 				}
 				if name == "admin" {
-					return xvalid.NewError("This name is not allowed", fieldName)
+					return xvalid.NewError("This name is not allowed", field)
 				}
 				return nil
 			})).
